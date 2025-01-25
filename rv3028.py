@@ -116,6 +116,28 @@ class RV3028:
 
         self._write_register(self.ALARM_MINUTES, data)
 
+    def check_alarm(self, clear = True):
+        """
+        Check if the alarm flag has been triggered.
+
+        :param clear: (Default: True) True to clear the alarm flag, False to leave it set
+        :return: True if alarm flag is set, False otherwise
+        """
+        status = self._read_register(self.STATUS)[0]
+        result = bool(status & 0x04)  # Check AF (bit 3)
+        if clear and result:
+            self._clear_alarm_flag()
+
+        return result
+
+    def _clear_alarm_flag(self):
+        """
+        Clear the alarm flag.
+        """
+        status = self._read_register(self.STATUS)[0]
+        status &= ~0x04  # clear AF bit
+        self._write_register(self.STATUS, bytes(status))
+
     def enable_trickle_charger(self, resistance=3000):
         control1 = self._read_register(self.CONTROL1)[0]
         control1 |= 0x20  # Set TCE (Trickle Charge Enable) bit
