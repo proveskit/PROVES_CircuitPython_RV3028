@@ -6,7 +6,6 @@ Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 
 import adafruit_bus_device.i2c_device as i2c_device
 
-
 class RV3028:
     # Register addresses
     SECONDS = 0x00
@@ -103,11 +102,11 @@ class RV3028:
         control2 |= 0x08  # Set AIE (Alarm Interrupt Enable) bit
         self._write_register(self.CONTROL2, bytes([control2]))
 
-        if minute is not None and minute < 0 or minute > 59:
+        if minute is not None and (minute < 0 or minute > 59):
             raise ValueError("Invalid minute value")
-        if hour is not None and hour < 0 or hour > 23:
+        if hour is not None and (hour < 0 or hour > 23):
             raise ValueError("Invalid hour value")
-        if weekday is not None and weekday < 0 or weekday > 6:
+        if weekday is not None and (weekday < 0 or weekday > 6):
             raise ValueError("Invalid weekday value")
 
         data = bytes(
