@@ -22,6 +22,43 @@ class RV3028:
         with self.i2c_device as i2c:
             i2c.write(bytes([register]) + data)
 
+    def _set_flag(self, register, mask, value):
+        try: value = int(value)
+        except: raise ValueError("Argument 'value' must be an integer")
+
+        data = self._read_register(register)[0]
+        data &= ~mask  # Clear the bits
+
+        shift = 0
+        temp_mask = mask
+        while (temp_mask & 0x01) == 0:
+            temp_mask >>= 1
+            shift += 1
+
+        max_value = mask >> shift
+        if value < 0 or value > max_value:
+            raise ValueError(f"Value {value} does not fit in the mask {mask:#04x}")
+        
+        data |= (value << shift) & mask # Set the bits
+
+        self._write_register(register, bytes([data]))
+    
+    def _get_flag(self, register, mask, size=0):
+        data = self._read_register(register)[0]
+        if size == 0:
+            return bool(data & mask)
+        return (data & mask) >> size
+
+    def _eecommand(self, command):
+        while self._get_flag(Reg.STATUS, Status.EEBUSY):
+            pass
+        self._set_flag(Reg.CONTROL1, Control1.EEPROM_REFRESH_DISABLE, Flag.SET)
+        self._set_flag(Reg.STATUS, Status.EEBUSY, Flag.SET)
+        self._write_register(Reg.EECMD, bytes([EECMD.RESET]))  # First command must be 00h
+        self._write_register(Reg.EECMD, bytes([command]))      # Update command
+        self._set_flag(Reg.STATUS, Status.EEBUSY, Flag.CLEAR)
+        self._set_flag(Reg.CONTROL1, Control1.EEPROM_REFRESH_DISABLE, Flag.CLEAR)
+
     def _bcd_to_int(self, bcd):
         return (bcd & 0x0F) + ((bcd >> 4) * 10)
 
@@ -76,7 +113,7 @@ class RV3028:
         """
         # Set alarm mask to check for minute, hour, and weekday match
         control2 = self._read_register(Reg.CONTROL2)[0]
-        control2 |= 0x08  # Set AIE (Alarm Interrupt Enable) bit
+        self._set_flag(Reg.CONTROL2, Control2.ALARM_INT_ENABLE, Flag.SET)
         self._write_register(Reg.CONTROL2, bytes([control2]))
 
         if minute is not None and (minute < 0 or minute > 59):
@@ -87,7 +124,7 @@ class RV3028:
             raise ValueError("Invalid weekday value")
 
         data = bytes(
-            (self._int_to_bcd(param) & 0x7F) if param is not None else 0x80
+            (self._int_to_bcd(param) & Alarm.ENABLE) if param is not None else Alarm.DISABLE
             for param in (minute, hour, weekday)
         )
 
@@ -100,61 +137,36 @@ class RV3028:
         :param clear: (Default: True) True to clear the alarm flag, False to leave it set
         :return: True if alarm flag is set, False otherwise
         """
-        status = self._read_register(Reg.STATUS)[0]
-        result = bool(status & 0x04)  # Check AF (bit 3)
+        result = self._get_flag(Reg.STATUS, Status.ALARM)
         if clear and result:
-            self._clear_alarm_flag()
+            self._set_flag(Reg.STATUS, Status.ALARM, Flag.CLEAR)
 
         return result
-
-    def _clear_alarm_flag(self):
-        """
-        Clear the alarm flag.
-        """
-        status = self._read_register(Reg.STATUS)[0]
-        status &= ~0x04  # clear AF bit
-        self._write_register(Reg.STATUS, bytes([status]))
-
+        
     def enable_trickle_charger(self, resistance=3000):
-        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
-
-        backup_reg |= 0x20 # Set TCE bit (5)
-        backup_reg &= ~0x03 # Clear TCR bits (0:1)
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
 
         # Set TCR (Trickle Charge Resistor) bits
-        if resistance == 3000:
-            tcr_value = 0x00
-        elif resistance == 5000:
-            tcr_value = 0x01
-        elif resistance == 9000:
-            tcr_value = 0x02
-        elif resistance == 15000:
-            tcr_value = 0x03
-        else:
+        if resistance not in [3000, 5000, 9000, 15000]:
             raise ValueError("Invalid trickle charger resistance")
+        if resistance == 3000:
+            tcr_value = Resistance.RES_3000
+        elif resistance == 5000:
+            tcr_value = Resistance.RES_5000
+        elif resistance == 9000:
+            tcr_value = Resistance.RES_9000
+        elif resistance == 15000:
+            tcr_value = Resistance.RES_15000
 
-        backup_reg |= tcr_value
-        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, tcr_value)
 
         # Refresh the EEPROM to apply changes
-        self._write_register(0x27, bytes([0x00]))  # First command must be 00h
-        self._write_register(0x27, bytes([0x12]))  # Update command
-
-        # Wait until the operation is done
-        while self._read_register(Reg.STATUS)[0] & 0x80:
-            pass
+        self._eecommand(EECMD.REFRESH)
 
     def disable_trickle_charger(self):
-        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
-
-        backup_reg &= ~0x20
-        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
-
-        self._write_register(0x27, bytes([0x00]))  # First command must be 00h
-        self._write_register(0x27, bytes([0x12]))  # Update command
-
-        while self._read_register(Reg.STATUS)[0] & 0x80:
-            pass
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR)
+        self._eecommand(EECMD.REFRESH)
 
     def configure_evi(self, enable=True):
         """
@@ -165,18 +177,15 @@ class RV3028:
         """
         if enable:
             # Configure Event Control Register
-            event_control = 0x40  # EHL = 1 (rising edge), ET = 00 (no filtering)
-            self._write_register(Reg.EVENT_CONTROL, bytes([event_control]))
+            self._set_flag(Reg.EVENT_CONTROL, EventControl.EVENT_HIGH_LOW_SELECT, Flag.SET)
+            self._set_flag(Reg.EVENT_CONTROL, EventControl.EVENT_FILTER, EventFilter.FILTER_OFF)
 
             # Enable time stamping and EVI interrupt
-            control2 = self._read_register(Reg.CONTROL2)[0]
-            control2 |= 0x84  # Set TSE (bit 7) and EIE (bit 2)
-            self._write_register(Reg.CONTROL2, bytes([control2]))
+            self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.SET)
+            self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.SET)
         else:
-            # Disable time stamping and EVI interrupt
-            control2 = self._read_register(Reg.CONTROL2)[0]
-            control2 &= ~0x84  # Clear TSE (bit 7) and EIE (bit 2)
-            self._write_register(Reg.CONTROL2, bytes([control2]))
+            self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.CLEAR)
+            self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.CLEAR)
 
     def get_event_timestamp(self):
         """
@@ -199,9 +208,7 @@ class RV3028:
         """
         Clear the Event Flag (EVF) in the Status Register.
         """
-        status = self._read_register(Reg.STATUS)[0]
-        status &= ~0x02  # Clear EVF (bit 1)
-        self._write_register(Reg.STATUS, bytes([status]))
+        self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
 
     def is_event_flag_set(self):
         """
@@ -209,8 +216,7 @@ class RV3028:
 
         :return: True if EVF is set, False otherwise
         """
-        status = self._read_register(Reg.STATUS)[0]
-        return bool(status & 0x02)  # Check EVF (bit 1)
+        return self._get_flag(Reg.STATUS, Status.EVENT)
 
     def configure_backup_switchover(self, mode="level", interrupt=False):
         """
@@ -221,35 +227,29 @@ class RV3028:
                      or 'disabled' to disable switchover
         :param interrupt: True to enable backup switchover interrupt, False to disable
         """
-        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
-
-        # Clear existing BSM bits
-        backup_reg &= ~0x0C
 
         if mode == "level":
-            backup_reg |= 0x0C  # Set BSM to 11 for LSM
+            backup_mode = BSM.LEVEL
         elif mode == "direct":
-            backup_reg |= 0x04  # Set BSM to 01 for DSM
+            backup_mode = BSM.DIRECT
         elif mode == "disabled":
-            pass  # BSM is already cleared to 00
+            backup_mode = BSM.DISABLED
         else:
             raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
+        
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, backup_mode)
 
         # Configure backup switchover interrupt
         if interrupt:
-            backup_reg |= 0x40  # Set BSIE bit
+            self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.SET)
         else:
-            backup_reg &= ~0x40  # Clear BSIE bit
+            self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.CLEAR)
 
         # Always enable fast edge detection
-        backup_reg |= 0x10  # Set FEDE bit
+        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.FEDE, Flag.SET)
 
-        # Write the configuration to EEPROM
-        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
-
-        # Update EEPROM (command 0x11)
-        self._write_register(0x27, bytes([0x00]))  # First command must be 00h
-        self._write_register(0x27, bytes([0x11]))  # Update command
+        # Update EEPROM
+        self._eecommand(EECMD.REFRESH)
 
     def is_backup_switchover_occurred(self):
         """
@@ -257,13 +257,11 @@ class RV3028:
 
         :return: True if switchover occurred, False otherwise
         """
-        status = self._read_register(Reg.STATUS)[0]
-        return bool(status & 0x20)  # Check BSF (bit 5)
-
+        return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
+    
     def clear_backup_switchover_flag(self):
         """
         Clear the Backup Switchover Flag (BSF) in the Status Register.
         """
-        status = self._read_register(Reg.STATUS)[0]
-        status &= ~0x20  # Clear BSF (bit 5)
-        self._write_register(Reg.STATUS, bytes([status]))
+        self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+

@@ -48,12 +48,17 @@ class Reg(IntEnum):
     EEPROM_OFFSET = 0x36
     EEPROM_BACKUP = 0x37
 
+class Flag(IntEnum):
+    SET = 1
+    CLEAR = 0
+
 class Alarm(IntEnum):
     """
     Contains bit masks for the alarm registers.
     The alarm registers that contain these flags are ALARM_MINUTES, ALARM_HOURS, and ALARM_DATE.
     """
-    ENABLE = 0x80 # 0: Enabled, 1: Disabled
+    DISABLE = 0x80 # This is a flag that you should set to disable the alarm.
+    ENABLE = 0x7F  # Enable the alarm.
 
 class Status(IntEnum):
     """
@@ -86,6 +91,7 @@ class TimerFreq(IntEnum):
     """
     Selections for the frequency of the timer countdown clock.
     """
+    SIZE = 2 # Number of bits used for the frequency selection
     FREQ_4096HZ = 0x00  # Default value
     FREQ_64HZ = 0x01
     FREQ_1HZ = 0x10    
@@ -117,6 +123,7 @@ class ClockIntOn(IntEnum):
 
     Example Usage: `clock_int_mask = ClockIntOn.TIMER | ClockIntOn.ALARM`
     """
+    SIZE = 2
     TIME_UPDATE = 0x01  # Enables the periodic time update interrupt.
     TIMER = 0x02  # Enables the countdown timer interrupt.
     ALARM = 0x04  # Enables the alarm interrupt.
@@ -140,6 +147,7 @@ class EventFilter(IntEnum):
     """
     Selections for the event filter.
     """
+    SIZE = 2
     FILTER_OFF = 0x00  # Default value
     FILTER_256Hz = 0x01
     FILTER_64Hz = 0x02
@@ -164,6 +172,7 @@ class FreqSelect(IntEnum):
     Selections for the frequency of the clock in CLKOUT.
     - 8192 Hz to 1 Hz clock pulses and the timer interrupt pulses can be affected by compensation pulses
     """
+    SIZE = 3
     FREQ_32768HZ = 0x00 # Default value
     FREQ_8192HZ = 0x01
     FREQ_1024HZ = 0x02
@@ -186,11 +195,13 @@ class EEPROMBackup(IntEnum):
     TRICKLE_CHARGE_ENABLE = 0x20  # 0: Trickle charger disabled (default). 1: Trickle charger enabled.
     BACKUP_SWITCHOVER_INT_ENABLE = 0x40  # 0: Backup switchover interrupt disabled (default). 1: Backup switchover interrupt enabled.
     EEOFFSET_LSB = 0x80  # LSB of the EEOffset value (see EEPROM OFFSET REGISTER in datasheet)
+    FEDE = 0x10 # FOR THE LOVE OF GOD, NEVER DISABLE THIS. 
 
 class Resistance(IntEnum):
     """
     Selections for the resistance of the trickle charger.
     """
+    SIZE = 2 
     RES_3000 = 0x00  # Default value (ohms)
     RES_5000 = 0x01
     RES_9000 = 0x02
@@ -200,6 +211,7 @@ class BSM(IntEnum):
     """
     Selections for the backup switchover mode.
     """
+    SIZE = 2
     DISABLED_DEFAULT = 0x00  # Default value
     DIRECT = 0x01 
     DISABLED = 0x02
