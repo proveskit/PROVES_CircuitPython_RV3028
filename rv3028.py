@@ -16,6 +16,9 @@ class RV3028:
     DATE = 0x04
     MONTH = 0x05
     YEAR = 0x06
+    ALARM_MINUTES = 0x07
+    ALARM_HOURS = 0x08
+    ALARM_WEEKDAY = 0x09
     STATUS = 0x0E
     CONTROL1 = 0x0F
     CONTROL2 = 0x10
@@ -87,20 +90,32 @@ class RV3028:
             self._bcd_to_int(data[0]),  # weekday
         )
 
-    def set_alarm(self, minute, hour, weekday):
+    def set_alarm(self, minute=None, hour=None, weekday=None):
+        """
+        Set the alarm time.
+
+        :param minute: Alarm minute (0-59) or None
+        :param hour: Alarm hour (0-23) or None 
+        :param weekday: Alarm weekday (0-6, 1=Sunday) or None
+        """
         # Set alarm mask to check for minute, hour, and weekday match
         control2 = self._read_register(self.CONTROL2)[0]
         control2 |= 0x08  # Set AIE (Alarm Interrupt Enable) bit
         self._write_register(self.CONTROL2, bytes([control2]))
 
+        if minute is not None and minute < 0 or minute > 59:
+            raise ValueError("Invalid minute value")
+        if hour is not None and hour < 0 or hour > 23:
+            raise ValueError("Invalid hour value")
+        if weekday is not None and weekday < 0 or weekday > 6:
+            raise ValueError("Invalid weekday value")
+
         data = bytes(
-            [
-                self._int_to_bcd(minute),
-                self._int_to_bcd(hour),
-                self._int_to_bcd(weekday),
-            ]
+            (self._int_to_bcd(param) & 0x7F) if param is not None else 0x80
+            for param in (minute, hour, weekday)
         )
-        self._write_register(self.MINUTES, data)
+
+        self._write_register(self.ALARM_MINUTES, data)
 
     def enable_trickle_charger(self, resistance=3000):
         control1 = self._read_register(self.CONTROL1)[0]
