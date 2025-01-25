@@ -136,30 +136,48 @@ class RV3028:
         """
         status = self._read_register(self.STATUS)[0]
         status &= ~0x04  # clear AF bit
-        self._write_register(self.STATUS, bytes(status))
+        self._write_register(self.STATUS, bytes([status]))
 
     def enable_trickle_charger(self, resistance=3000):
-        control1 = self._read_register(self.CONTROL1)[0]
-        control1 |= 0x20  # Set TCE (Trickle Charge Enable) bit
+        backup_reg = self._read_register(self.EEPROM_BACKUP)[0]
+
+        backup_reg |= 0x20 # Set TCE bit (5)
+        backup_reg &= ~0x03 # Clear TCR bits (0:1)
 
         # Set TCR (Trickle Charge Resistor) bits
         if resistance == 3000:
-            control1 |= 0x00
+            tcr_value = 0x00
         elif resistance == 5000:
-            control1 |= 0x01
+            tcr_value = 0x01
         elif resistance == 9000:
-            control1 |= 0x02
+            tcr_value = 0x02
         elif resistance == 15000:
-            control1 |= 0x03
+            tcr_value = 0x03
         else:
             raise ValueError("Invalid trickle charger resistance")
 
-        self._write_register(self.CONTROL1, bytes([control1]))
+        backup_reg |= tcr_value
+        self._write_register(self.EEPROM_BACKUP, bytes([backup_reg]))
+
+        # Refresh the EEPROM to apply changes
+        self._write_register(0x27, bytes([0x00]))  # First command must be 00h
+        self._write_register(0x27, bytes([0x12]))  # Update command
+
+        # Wait until the operation is done
+        while self._read_register(self.STATUS)[0] & 0x80:
+            pass
 
     def disable_trickle_charger(self):
-        control1 = self._read_register(self.CONTROL1)[0]
-        control1 &= ~0x20  # Clear TCE (Trickle Charge Enable) bit
-        self._write_register(self.CONTROL1, bytes([control1]))
+        backup_reg = self._read_register(self.EEPROM_BACKUP)[0]
+
+        backup_reg &= ~0x20
+        self._write_register(self.EEPROM_BACKUP, bytes([backup_reg]))
+
+        self._write_register(0x27, bytes([0x00]))  # First command must be 00h
+        self._write_register(0x27, bytes([0x12]))  # Update command
+
+        while self._read_register(self.STATUS)[0] & 0x80:
+            pass
 
     def configure_evi(self, enable=True):
         """
