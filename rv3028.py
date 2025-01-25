@@ -5,32 +5,9 @@ Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
 import adafruit_bus_device.i2c_device as i2c_device
+from registers import *
 
 class RV3028:
-    # Register addresses
-    SECONDS = 0x00
-    MINUTES = 0x01
-    HOURS = 0x02
-    WEEKDAY = 0x03
-    DATE = 0x04
-    MONTH = 0x05
-    YEAR = 0x06
-    ALARM_MINUTES = 0x07
-    ALARM_HOURS = 0x08
-    ALARM_WEEKDAY = 0x09
-    STATUS = 0x0E
-    CONTROL1 = 0x0F
-    CONTROL2 = 0x10
-    EVENT_CONTROL = 0x13
-    TIMESTAMP_COUNT = 0x14
-    TIMESTAMP_SECONDS = 0x15
-    TIMESTAMP_MINUTES = 0x16
-    TIMESTAMP_HOURS = 0x17
-    TIMESTAMP_DATE = 0x18
-    TIMESTAMP_MONTH = 0x19
-    TIMESTAMP_YEAR = 0x1A
-    EEPROM_BACKUP = 0x37
-
     def __init__(self, i2c_bus, address=0x52):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
 
@@ -59,10 +36,10 @@ class RV3028:
                 self._int_to_bcd(hours),
             ]
         )
-        self._write_register(self.SECONDS, data)
+        self._write_register(Reg.SECONDS, data)
 
     def get_time(self):
-        data = self._read_register(self.SECONDS, 3)
+        data = self._read_register(Reg.SECONDS, 3)
         return (
             self._bcd_to_int(data[2]),  # hours
             self._bcd_to_int(data[1]),  # minutes
@@ -78,10 +55,10 @@ class RV3028:
                 self._int_to_bcd(year),
             ]
         )
-        self._write_register(self.WEEKDAY, data)
+        self._write_register(Reg.WEEKDAY, data)
 
     def get_date(self):
-        data = self._read_register(self.WEEKDAY, 4)
+        data = self._read_register(Reg.WEEKDAY, 4)
         return (
             self._bcd_to_int(data[3]),  # year
             self._bcd_to_int(data[2]),  # month
@@ -98,9 +75,9 @@ class RV3028:
         :param weekday: Alarm weekday (0-6, 1=Sunday) or None
         """
         # Set alarm mask to check for minute, hour, and weekday match
-        control2 = self._read_register(self.CONTROL2)[0]
+        control2 = self._read_register(Reg.CONTROL2)[0]
         control2 |= 0x08  # Set AIE (Alarm Interrupt Enable) bit
-        self._write_register(self.CONTROL2, bytes([control2]))
+        self._write_register(Reg.CONTROL2, bytes([control2]))
 
         if minute is not None and (minute < 0 or minute > 59):
             raise ValueError("Invalid minute value")
@@ -114,7 +91,7 @@ class RV3028:
             for param in (minute, hour, weekday)
         )
 
-        self._write_register(self.ALARM_MINUTES, data)
+        self._write_register(Reg.ALARM_MINUTES, data)
 
     def check_alarm(self, clear = True):
         """
@@ -123,7 +100,7 @@ class RV3028:
         :param clear: (Default: True) True to clear the alarm flag, False to leave it set
         :return: True if alarm flag is set, False otherwise
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         result = bool(status & 0x04)  # Check AF (bit 3)
         if clear and result:
             self._clear_alarm_flag()
@@ -134,12 +111,12 @@ class RV3028:
         """
         Clear the alarm flag.
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         status &= ~0x04  # clear AF bit
-        self._write_register(self.STATUS, bytes([status]))
+        self._write_register(Reg.STATUS, bytes([status]))
 
     def enable_trickle_charger(self, resistance=3000):
-        backup_reg = self._read_register(self.EEPROM_BACKUP)[0]
+        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
 
         backup_reg |= 0x20 # Set TCE bit (5)
         backup_reg &= ~0x03 # Clear TCR bits (0:1)
@@ -157,26 +134,26 @@ class RV3028:
             raise ValueError("Invalid trickle charger resistance")
 
         backup_reg |= tcr_value
-        self._write_register(self.EEPROM_BACKUP, bytes([backup_reg]))
+        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
 
         # Refresh the EEPROM to apply changes
         self._write_register(0x27, bytes([0x00]))  # First command must be 00h
         self._write_register(0x27, bytes([0x12]))  # Update command
 
         # Wait until the operation is done
-        while self._read_register(self.STATUS)[0] & 0x80:
+        while self._read_register(Reg.STATUS)[0] & 0x80:
             pass
 
     def disable_trickle_charger(self):
-        backup_reg = self._read_register(self.EEPROM_BACKUP)[0]
+        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
 
         backup_reg &= ~0x20
-        self._write_register(self.EEPROM_BACKUP, bytes([backup_reg]))
+        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
 
         self._write_register(0x27, bytes([0x00]))  # First command must be 00h
         self._write_register(0x27, bytes([0x12]))  # Update command
 
-        while self._read_register(self.STATUS)[0] & 0x80:
+        while self._read_register(Reg.STATUS)[0] & 0x80:
             pass
 
     def configure_evi(self, enable=True):
@@ -189,17 +166,17 @@ class RV3028:
         if enable:
             # Configure Event Control Register
             event_control = 0x40  # EHL = 1 (rising edge), ET = 00 (no filtering)
-            self._write_register(self.EVENT_CONTROL, bytes([event_control]))
+            self._write_register(Reg.EVENT_CONTROL, bytes([event_control]))
 
             # Enable time stamping and EVI interrupt
-            control2 = self._read_register(self.CONTROL2)[0]
+            control2 = self._read_register(Reg.CONTROL2)[0]
             control2 |= 0x84  # Set TSE (bit 7) and EIE (bit 2)
-            self._write_register(self.CONTROL2, bytes([control2]))
+            self._write_register(Reg.CONTROL2, bytes([control2]))
         else:
             # Disable time stamping and EVI interrupt
-            control2 = self._read_register(self.CONTROL2)[0]
+            control2 = self._read_register(Reg.CONTROL2)[0]
             control2 &= ~0x84  # Clear TSE (bit 7) and EIE (bit 2)
-            self._write_register(self.CONTROL2, bytes([control2]))
+            self._write_register(Reg.CONTROL2, bytes([control2]))
 
     def get_event_timestamp(self):
         """
@@ -207,7 +184,7 @@ class RV3028:
 
         :return: Tuple of (year, month, date, hours, minutes, seconds, count)
         """
-        data = self._read_register(self.TIMESTAMP_COUNT, 7)
+        data = self._read_register(Reg.TIMESTAMP_COUNT, 7)
         return (
             self._bcd_to_int(data[6]),  # year
             self._bcd_to_int(data[5]),  # month
@@ -222,9 +199,9 @@ class RV3028:
         """
         Clear the Event Flag (EVF) in the Status Register.
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         status &= ~0x02  # Clear EVF (bit 1)
-        self._write_register(self.STATUS, bytes([status]))
+        self._write_register(Reg.STATUS, bytes([status]))
 
     def is_event_flag_set(self):
         """
@@ -232,7 +209,7 @@ class RV3028:
 
         :return: True if EVF is set, False otherwise
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         return bool(status & 0x02)  # Check EVF (bit 1)
 
     def configure_backup_switchover(self, mode="level", interrupt=False):
@@ -244,7 +221,7 @@ class RV3028:
                      or 'disabled' to disable switchover
         :param interrupt: True to enable backup switchover interrupt, False to disable
         """
-        backup_reg = self._read_register(self.EEPROM_BACKUP)[0]
+        backup_reg = self._read_register(Reg.EEPROM_BACKUP)[0]
 
         # Clear existing BSM bits
         backup_reg &= ~0x0C
@@ -268,7 +245,7 @@ class RV3028:
         backup_reg |= 0x10  # Set FEDE bit
 
         # Write the configuration to EEPROM
-        self._write_register(self.EEPROM_BACKUP, bytes([backup_reg]))
+        self._write_register(Reg.EEPROM_BACKUP, bytes([backup_reg]))
 
         # Update EEPROM (command 0x11)
         self._write_register(0x27, bytes([0x00]))  # First command must be 00h
@@ -280,13 +257,13 @@ class RV3028:
 
         :return: True if switchover occurred, False otherwise
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         return bool(status & 0x20)  # Check BSF (bit 5)
 
     def clear_backup_switchover_flag(self):
         """
         Clear the Backup Switchover Flag (BSF) in the Status Register.
         """
-        status = self._read_register(self.STATUS)[0]
+        status = self._read_register(Reg.STATUS)[0]
         status &= ~0x20  # Clear BSF (bit 5)
-        self._write_register(self.STATUS, bytes([status]))
+        self._write_register(Reg.STATUS, bytes([status]))

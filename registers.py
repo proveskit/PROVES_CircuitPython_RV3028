@@ -76,20 +76,20 @@ class Control1(IntEnum):
     function and to select or set operations for the Periodic Countdown Timer.
     """
     FREQ_SELECT = 0x03 # 2 bit flag. Uses the FreqSelect enum for values.
-    class Freq(IntEnum):
-        """
-        Selections for the frequency of the clock.
-        """
-        FREQ_4096HZ = 0x00  # Default value
-        FREQ_64HZ = 0x01
-        FREQ_1HZ = 0x10    
-        FREQ_60S = 0x11
-
     TIMER_ENABLE = 0x04  # Starts the countdown timer if 1.
     EEPROM_REFRESH_DISABLE = 0x08  # Disables the automatic EEPROM refresh if 1.
     UPDATE_INT_SELECT = 0x10  # 0: second updates (default). 1: minute updates.
     WADA = 0x20  # 0: use weekday for alarm (default). 1: use date for alarm.
     TIMER_REPEAT = 0x80  # 0: Single mode, halt countdown when it reaches 0 (default). 1: repeat timer.
+
+class TimerFreq(IntEnum):
+    """
+    Selections for the frequency of the timer countdown clock.
+    """
+    FREQ_4096HZ = 0x00  # Default value
+    FREQ_64HZ = 0x01
+    FREQ_1HZ = 0x10    
+    FREQ_60S = 0x11
 
 class Control2(IntEnum):
     """
@@ -134,16 +134,16 @@ class EventControl(IntEnum):
     TIMESTAMP_OVERWRITE = 0x02  # 0: Timestamp is not overwritten. 1: Timestamp is overwritten.
     TIMESTAMP_RESET = 0x04  # 0: Timestamp is not reset. 1: Reset all seven TS registers.
     EVENT_FILTER = 0x30  # 2 bit flag. Uses the EventFilter enum for values.
-    class EventFilter(IntEnum):
-        """
-        Selections for the event filter.
-        """
-        FILTER_OFF = 0x00  # Default value
-        FILTER_256Hz = 0x01
-        FILTER_64Hz = 0x02
-        FILTER_8Hz = 0x03
-
     EVENT_HIGH_LOW_SELECT = 0x40  # 0: Low level or falling edge. 1: High level or rising edge.
+
+class EventFilter(IntEnum):
+    """
+    Selections for the event filter.
+    """
+    FILTER_OFF = 0x00  # Default value
+    FILTER_256Hz = 0x01
+    FILTER_64Hz = 0x02
+    FILTER_8Hz = 0x03
 
 class EEPROMClockOut(IntEnum):
     """
@@ -155,23 +155,23 @@ class EEPROMClockOut(IntEnum):
     F = 32.768 kHz.
     """
     FREQ_SELECT: 0x07  # 3 bit flag. Uses the FreqSelect enum for values.
-    class FreqSelect(IntEnum):
-        """
-        Selections for the frequency of the clock.
-        - 8192 Hz to 1 Hz clock pulses and the timer interrupt pulses can be affected by compensation pulses
-        """
-        FREQ_32768HZ = 0x00 # Default value
-        FREQ_8192HZ = 0x01
-        FREQ_1024HZ = 0x02
-        FREQ_64HZ = 0x03
-        FREQ_32HZ = 0x04
-        FREQ_1HZ = 0x05
-        PREDEFINED = 0x06 #  CLKSY bit has no effect
-        LOW = 0x07
-
     POR_INT_ENABLE = 0x08  # 0: POR interrupt disabled (default). 1: POR interrupt enabled.
     CLKOUT_SYNC_ENABLE = 0x40  # 0: Synchronization disabled. 1: Synchronization enable/disable enabled (default).
     CLKOUT_ENABLE = 0x80  # 0: Clock output pin LOW. 1: Clock output on CLKOUT pin enabled (default).
+
+class FreqSelect(IntEnum):
+    """
+    Selections for the frequency of the clock in CLKOUT.
+    - 8192 Hz to 1 Hz clock pulses and the timer interrupt pulses can be affected by compensation pulses
+    """
+    FREQ_32768HZ = 0x00 # Default value
+    FREQ_8192HZ = 0x01
+    FREQ_1024HZ = 0x02
+    FREQ_64HZ = 0x03
+    FREQ_32HZ = 0x04
+    FREQ_1HZ = 0x05
+    PREDEFINED = 0x06 #  CLKSY bit has no effect
+    LOW = 0x07
 
 class EEPROMBackup(IntEnum):
     """
@@ -182,28 +182,28 @@ class EEPROMBackup(IntEnum):
     EEPROM to the corresponding RAM mirror.
     """
     TRICKLE_CHARGE_RES = 0x03  # 2 bit flag representing trickle charge resistance. Uses the Resistance enum for values.
-    class Resistance(IntEnum):
-        """
-        Selections for the resistance of the trickle charger.
-        """
-        RES_3000 = 0x00  # Default value (ohms)
-        RES_5000 = 0x01
-        RES_9000 = 0x02
-        RES_15000 = 0x03
-
-    BACKUP_SWITCHOVER = 0x0C # 2 bit flag representing backup switchover mode. Uses the Mode enum for values.
-    class Mode(IntEnum):
-        """
-        Selections for the backup switchover mode.
-        """
-        DISABLED_DEFAULT = 0x00  # Default value
-        DIRECT = 0x01 
-        DISABLED = 0x02
-        LEVEL = 0x03
-
+    BACKUP_SWITCHOVER = 0x0C # 2 bit flag representing backup switchover mode. Uses the BSM enum for values.
     TRICKLE_CHARGE_ENABLE = 0x20  # 0: Trickle charger disabled (default). 1: Trickle charger enabled.
     BACKUP_SWITCHOVER_INT_ENABLE = 0x40  # 0: Backup switchover interrupt disabled (default). 1: Backup switchover interrupt enabled.
     EEOFFSET_LSB = 0x80  # LSB of the EEOffset value (see EEPROM OFFSET REGISTER in datasheet)
+
+class Resistance(IntEnum):
+    """
+    Selections for the resistance of the trickle charger.
+    """
+    RES_3000 = 0x00  # Default value (ohms)
+    RES_5000 = 0x01
+    RES_9000 = 0x02
+    RES_15000 = 0x03
+
+class BSM(IntEnum):
+    """
+    Selections for the backup switchover mode.
+    """
+    DISABLED_DEFAULT = 0x00  # Default value
+    DIRECT = 0x01 
+    DISABLED = 0x02
+    LEVEL = 0x03
 
 class EECMD(IntEnum):
     """
