@@ -1,6 +1,7 @@
 class MockI2C:
     def __init__(self):
-        self.registers = [0x00]*256 # 256 8 bit registers
+        self.registers = [0x00] * 256  # 256 8 bit registers
+
 
 class MockI2CDevice:
     def __init__(self, i2c: MockI2C, address):
@@ -11,7 +12,7 @@ class MockI2CDevice:
     # Context manager methods
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
@@ -23,7 +24,7 @@ class MockI2CDevice:
             # First byte is the register address
             register = data[0]
             # Write the data to consecutive registers
-            self.i2c.registers[register:register+len(data[1:])] = data[1:]
+            self.i2c.registers[register : register + len(data[1:])] = data[1:]
             self.current_register = register  # Update current register
 
     def readinto(self, buffer):
@@ -32,4 +33,3 @@ class MockI2CDevice:
         for i in range(len(buffer)):
             buffer[i] = self.i2c.registers[self.current_register + i]
         self.current_register += len(buffer)
-

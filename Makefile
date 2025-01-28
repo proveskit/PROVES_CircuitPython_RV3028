@@ -24,7 +24,7 @@ fmt: pre-commit-install ## Lint and format files
 
 .PHONY: test
 test: .venv ## Run tests
-	$(UV) run coverage run --rcfile=pyproject.toml -m pytest test/
+	$(UV) run coverage run --rcfile=pyproject.toml -m pytest tests/
 	@$(UV) run coverage html --rcfile=pyproject.toml > /dev/null
 	@$(UV) run coverage xml --rcfile=pyproject.toml > /dev/null
 

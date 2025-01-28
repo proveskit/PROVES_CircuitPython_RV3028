@@ -4,12 +4,26 @@ This class handles communications
 Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
-import adafruit_bus_device.i2c_device as i2c_device
-from registers import *
+from registers import (
+    BSM,
+    EECMD,
+    Alarm,
+    Control1,
+    Control2,
+    EEPROMBackup,
+    EventControl,
+    EventFilter,
+    Flag,
+    Reg,
+    Resistance,
+    Status,
+)
+from tests.stubs.i2c_device import I2CDevice
+
 
 class RV3028:
-    def __init__(self, i2c_bus, address=0x52):
-        self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
+    def __init__(self, i2c_device: I2CDevice):
+        self.i2c_device = i2c_device
 
     def _read_register(self, register, length=1):
         with self.i2c_device as i2c:
@@ -23,8 +37,10 @@ class RV3028:
             i2c.write(bytes([register]) + data)
 
     def _set_flag(self, register, mask, value):
-        try: value = int(value)
-        except: raise ValueError("Argument 'value' must be an integer")
+        try:
+            value = int(value)
+        except Exception:
+            raise ValueError("Argument 'value' must be an integer")
 
         data = self._read_register(register)[0]
         data &= ~mask  # Clear the bits
@@ -38,11 +54,11 @@ class RV3028:
         max_value = mask >> shift
         if value < 0 or value > max_value:
             raise ValueError(f"Value {value} does not fit in the mask {mask:#04x}")
-        
-        data |= (value << shift) & mask # Set the bits
+
+        data |= (value << shift) & mask  # Set the bits
 
         self._write_register(register, bytes([data]))
-    
+
     def _get_flag(self, register, mask, size=0):
         data = self._read_register(register)[0]
         if size == 0:
@@ -54,8 +70,10 @@ class RV3028:
             pass
         self._set_flag(Reg.CONTROL1, Control1.EEPROM_REFRESH_DISABLE, Flag.SET)
         self._set_flag(Reg.STATUS, Status.EEBUSY, Flag.SET)
-        self._write_register(Reg.EECMD, bytes([EECMD.RESET]))  # First command must be 00h
-        self._write_register(Reg.EECMD, bytes([command]))      # Update command
+        self._write_register(
+            Reg.EECMD, bytes([EECMD.RESET])
+        )  # First command must be 00h
+        self._write_register(Reg.EECMD, bytes([command]))  # Update command
         self._set_flag(Reg.STATUS, Status.EEBUSY, Flag.CLEAR)
         self._set_flag(Reg.CONTROL1, Control1.EEPROM_REFRESH_DISABLE, Flag.CLEAR)
 
@@ -108,7 +126,7 @@ class RV3028:
         Set the alarm time.
 
         :param minute: Alarm minute (0-59) or None
-        :param hour: Alarm hour (0-23) or None 
+        :param hour: Alarm hour (0-23) or None
         :param weekday: Alarm weekday (0-6, 1=Sunday) or None
         """
         # Set alarm mask to check for minute, hour, and weekday match
@@ -124,13 +142,15 @@ class RV3028:
             raise ValueError("Invalid weekday value")
 
         data = bytes(
-            (self._int_to_bcd(param) & Alarm.ENABLE) if param is not None else Alarm.DISABLE
+            (self._int_to_bcd(param) & Alarm.ENABLE)
+            if param is not None
+            else Alarm.DISABLE
             for param in (minute, hour, weekday)
         )
 
         self._write_register(Reg.ALARM_MINUTES, data)
 
-    def check_alarm(self, clear = True):
+    def check_alarm(self, clear=True):
         """
         Check if the alarm flag has been triggered.
 
@@ -142,7 +162,7 @@ class RV3028:
             self._set_flag(Reg.STATUS, Status.ALARM, Flag.CLEAR)
 
         return result
-        
+
     def enable_trickle_charger(self, resistance=3000):
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
@@ -165,7 +185,9 @@ class RV3028:
         self._eecommand(EECMD.REFRESH)
 
     def disable_trickle_charger(self):
-        self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR)
+        self._set_flag(
+            Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR
+        )
         self._eecommand(EECMD.REFRESH)
 
     def configure_evi(self, enable=True):
@@ -177,8 +199,12 @@ class RV3028:
         """
         if enable:
             # Configure Event Control Register
-            self._set_flag(Reg.EVENT_CONTROL, EventControl.EVENT_HIGH_LOW_SELECT, Flag.SET)
-            self._set_flag(Reg.EVENT_CONTROL, EventControl.EVENT_FILTER, EventFilter.FILTER_OFF)
+            self._set_flag(
+                Reg.EVENT_CONTROL, EventControl.EVENT_HIGH_LOW_SELECT, Flag.SET
+            )
+            self._set_flag(
+                Reg.EVENT_CONTROL, EventControl.EVENT_FILTER, EventFilter.FILTER_OFF
+            )
 
             # Enable time stamping and EVI interrupt
             self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.SET)
@@ -236,14 +262,18 @@ class RV3028:
             backup_mode = BSM.DISABLED
         else:
             raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
-        
+
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, backup_mode)
 
         # Configure backup switchover interrupt
         if interrupt:
-            self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.SET)
+            self._set_flag(
+                Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.SET
+            )
         else:
-            self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.CLEAR)
+            self._set_flag(
+                Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE, Flag.CLEAR
+            )
 
         # Always enable fast edge detection
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.FEDE, Flag.SET)
@@ -258,10 +288,9 @@ class RV3028:
         :return: True if switchover occurred, False otherwise
         """
         return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
-    
+
     def clear_backup_switchover_flag(self):
         """
         Clear the Backup Switchover Flag (BSF) in the Status Register.
         """
         self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
-
