@@ -41,6 +41,12 @@ def test_set_and_get_date(rtc):
     assert weekday == 5
 
 
+def test_set_flag(rtc):
+    # Check if _set_flag raises a ValueError
+    with pytest.raises(ValueError):
+        rtc._set_flag(0, 0, "funny string")
+
+
 def test_set_alarm(rtc):
     rtc.set_alarm(minute=30, hour=14, weekday=3)
     alarm_minutes = rtc._read_register(Reg.ALARM_MINUTES)[0]

@@ -40,7 +40,7 @@ class RV3028:
         try:
             value = int(value)
         except Exception:
-            raise ValueError("Argument 'value' must be an integer")
+            raise ValueError("Argument 'value' must be an integer or boolean")
 
         data = self._read_register(register)[0]
         data &= ~mask  # Clear the bits
