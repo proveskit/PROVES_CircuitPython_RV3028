@@ -61,8 +61,8 @@ class Alarm(IntEnum):
     The alarm registers that contain these flags are ALARM_MINUTES, ALARM_HOURS, and ALARM_DATE.
     """
 
-    DISABLE = 0x80  # This is a flag that you should set to disable the alarm.
-    ENABLE = 0x7F  # Enable the alarm.
+    DISABLED = 0x80  # This is a flag that you should set to disable the alarm.
+    VALUE = 0x7F  # Enable the alarm and store the value.
 
 
 class Status(IntEnum):

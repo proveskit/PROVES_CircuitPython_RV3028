@@ -83,7 +83,7 @@ class RV3028:
     def _int_to_bcd(self, value):
         return ((value // 10) << 4) | (value % 10)
 
-    def set_time(self, hours: int, minutes: int, seconds: int):
+    def set_time(self, hours: int, minutes: int, seconds: int) -> None:
         """
         Sets the time on the device. This method configures the device's clock.
 
@@ -101,7 +101,7 @@ class RV3028:
         )
         self._write_register(Reg.SECONDS, data)
 
-    def get_time(self):
+    def get_time(self) -> tuple[int, int, int]:
         """
         Retrieves the current time from the device.
 
@@ -119,7 +119,7 @@ class RV3028:
             self._bcd_to_int(data[0]),  # seconds
         )
 
-    def set_date(self, year: int, month: int, date: int, weekday: int):
+    def set_date(self, year: int, month: int, date: int, weekday: int) -> None:
         """
         Sets the date of the device.
 
@@ -141,7 +141,7 @@ class RV3028:
             Reg.WEEKDAY, data
         )  # this is a weird way to do it but it works
 
-    def get_date(self):
+    def get_date(self) -> tuple[int, int, int, int]:
         """
         Gets the date of the device.
 
@@ -160,9 +160,11 @@ class RV3028:
             self._bcd_to_int(data[0]),  # weekday
         )
 
-    def set_alarm(self, minute: int = None, hour: int = None, weekday: int = None):
+    def set_alarm(
+        self, minute: int = None, hour: int = None, weekday: int = None
+    ) -> None:
         """
-        Set the alarm time.
+        Set the alarm time. A value of None indicates that that portion of the alarm will not be used.
 
         Args:
             Alarm minute (0-59) or None
@@ -182,15 +184,15 @@ class RV3028:
             raise ValueError("Invalid weekday value")
 
         data = bytes(
-            (self._int_to_bcd(param) & Alarm.ENABLE)
+            (self._int_to_bcd(param) & Alarm.VALUE)
             if param is not None
-            else Alarm.DISABLE
+            else Alarm.DISABLED
             for param in (minute, hour, weekday)
         )
 
         self._write_register(Reg.ALARM_MINUTES, data)
 
-    def check_alarm(self, clear: bool = True):
+    def check_alarm(self, clear: bool = True) -> bool:
         """
         Check if the alarm flag has been triggered.
 
@@ -204,6 +206,31 @@ class RV3028:
             self._set_flag(Reg.STATUS, Status.ALARM, Flag.CLEAR)
 
         return bool(result)
+
+    def get_alarm(self) -> tuple:
+        """
+        If an alarm has been set on the device, provides the set time.
+
+        Returns:
+            A tuple representing the alarm configuration. A return value of None in any field means that that field was not set. Tuple values:
+                minute (int or None): the minute value of the alarm (0-59)
+                hour (int or None): the hour value of the alarm (0-23)
+                weekday (int or None): the weekday of the alarm (0-6, 0 = Sunday)
+        """
+
+        # Defining the helper in here limits its scope so outside users can't access it.
+        def _get_alarm_field(reg: Reg):
+            enabled = self._get_flag(reg, Alarm.DISABLED)
+            if not enabled:
+                return None
+            else:
+                return self._get_flag(reg, Alarm.VALUE)
+
+        return tuple(
+            _get_alarm_field(Reg.ALARM_MINUTES),
+            _get_alarm_field(Reg.ALARM_HOURS),
+            _get_alarm_field(Reg.ALARM_WEEKDAY),
+        )
 
     # TODO: re-write this
     def enable_trickle_charger(self, resistance=3000):
