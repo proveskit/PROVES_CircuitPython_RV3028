@@ -63,6 +63,7 @@ def test_check_alarm(rtc):
     status = rtc._read_register(Reg.STATUS)[0]
     assert not (status & Status.ALARM)
 
+
 def test_get_alarm(rtc):
     rtc.set_alarm(minute=4, hour=5, weekday=6)
     rtc._set_flag(Reg.ALARM_MINUTES, Alarm.DISABLED, Flag.SET)
@@ -78,6 +79,7 @@ def test_get_alarm(rtc):
 
     rtc.set_alarm(minute=4, hour=5, weekday=6)
     assert rtc.get_alarm() == (4, 5, 6)
+
 
 def test_enable_trickle_charger(rtc):
     rtc.enable_trickle_charger(resistance=9000)

@@ -20,6 +20,7 @@ from registers import (
 )
 from tests.stubs.i2c_device import I2CDevice
 
+
 class RV3028:
     def __init__(self, i2c_device: I2CDevice):
         self.i2c_device = i2c_device
@@ -64,7 +65,7 @@ class RV3028:
             # if mask is a power of 2, return a single bit
             if mask & (mask - 1) == 0:
                 return bool(data & mask)
-            
+
             return data & mask
 
         return (data & mask) >> size
