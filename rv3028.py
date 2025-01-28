@@ -32,7 +32,7 @@ class RV3028:
             i2c.readinto(result)
             return result
 
-    def _write_register(self, register, data):
+    def _write_register(self, register: Reg, data: bytes):
         with self.i2c_device as i2c:
             i2c.write(bytes([register]) + data)
 
@@ -65,7 +65,7 @@ class RV3028:
             return bool(data & mask)
         return (data & mask) >> size
 
-    def _eecommand(self, command):
+    def _eecommand(self, command: EECMD):
         while self._get_flag(Reg.STATUS, Status.EEBUSY):
             pass
         self._set_flag(Reg.CONTROL1, Control1.EEPROM_REFRESH_DISABLE, Flag.SET)
@@ -83,7 +83,15 @@ class RV3028:
     def _int_to_bcd(self, value):
         return ((value // 10) << 4) | (value % 10)
 
-    def set_time(self, hours, minutes, seconds):
+    def set_time(self, hours: int, minutes: int, seconds: int):
+        """
+        Sets the time on the device. This method configures the device's clock.
+
+        Args:
+            hours (int): The hour value to set (0-23 for 24-hour format).
+            minutes (int): The minute value to set (0-59).
+            seconds (int): The second value to set (0-59).
+        """
         data = bytes(
             [
                 self._int_to_bcd(seconds),
@@ -94,6 +102,16 @@ class RV3028:
         self._write_register(Reg.SECONDS, data)
 
     def get_time(self):
+        """
+        Retrieves the current time from the device.
+
+        Returns:
+            tuple: A tuple containing the current time as (hours, minutes, seconds),
+            where:
+                hours (int): The hour value (0-23 for 24-hour format).
+                minutes (int): The minute value (0-59).
+                seconds (int): The second value (0-59).
+        """
         data = self._read_register(Reg.SECONDS, 3)
         return (
             self._bcd_to_int(data[2]),  # hours
@@ -101,7 +119,16 @@ class RV3028:
             self._bcd_to_int(data[0]),  # seconds
         )
 
-    def set_date(self, year, month, date, weekday):
+    def set_date(self, year: int, month: int, date: int, weekday: int):
+        """
+        Sets the date of the device.
+
+        Args:
+            year (int): The year value to set
+            month (int): The month value to set (1-12).
+            date (int): The date value to set (1-31).
+            weekday (int): The day of the week to set (0-6, where 0 represents Sunday).
+        """
         data = bytes(
             [
                 self._int_to_bcd(weekday),
@@ -110,9 +137,21 @@ class RV3028:
                 self._int_to_bcd(year),
             ]
         )
-        self._write_register(Reg.WEEKDAY, data)
+        self._write_register(
+            Reg.WEEKDAY, data
+        )  # this is a weird way to do it but it works
 
     def get_date(self):
+        """
+        Gets the date of the device.
+
+        Returns:
+            tuple: A 4-tuple (year, month, date, weekday) where:
+                year (int): The year value (0-99).
+                month (int): The month value (1-12).
+                date (int): The date value (1-31).
+                weekday (int): The day of the week (0-6, where 0 represents Sunday).
+        """
         data = self._read_register(Reg.WEEKDAY, 4)
         return (
             self._bcd_to_int(data[3]),  # year
@@ -121,13 +160,14 @@ class RV3028:
             self._bcd_to_int(data[0]),  # weekday
         )
 
-    def set_alarm(self, minute=None, hour=None, weekday=None):
+    def set_alarm(self, minute: int = None, hour: int = None, weekday: int = None):
         """
         Set the alarm time.
 
-        :param minute: Alarm minute (0-59) or None
-        :param hour: Alarm hour (0-23) or None
-        :param weekday: Alarm weekday (0-6, 1=Sunday) or None
+        Args:
+            Alarm minute (0-59) or None
+            Alarm hour (0-23) or None
+            Alarm weekday (0-6, 0=Sunday) or None
         """
         # Set alarm mask to check for minute, hour, and weekday match
         control2 = self._read_register(Reg.CONTROL2)[0]
@@ -150,19 +190,22 @@ class RV3028:
 
         self._write_register(Reg.ALARM_MINUTES, data)
 
-    def check_alarm(self, clear=True):
+    def check_alarm(self, clear: bool = True):
         """
         Check if the alarm flag has been triggered.
 
-        :param clear: (Default: True) True to clear the alarm flag, False to leave it set
-        :return: True if alarm flag is set, False otherwise
+        Args:
+            clear (bool): (Default: True) True to clear the alarm flag, False to leave it set.
+        Returns:
+            True if alarm flag is set, False otherwise
         """
         result = self._get_flag(Reg.STATUS, Status.ALARM)
         if clear and result:
             self._set_flag(Reg.STATUS, Status.ALARM, Flag.CLEAR)
 
-        return result
+        return bool(result)
 
+    # TODO: re-write this
     def enable_trickle_charger(self, resistance=3000):
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
@@ -184,12 +227,14 @@ class RV3028:
         # Refresh the EEPROM to apply changes
         self._eecommand(EECMD.REFRESH)
 
+    # TODO: re-write this
     def disable_trickle_charger(self):
         self._set_flag(
             Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR
         )
         self._eecommand(EECMD.REFRESH)
 
+    # TODO: re-write this
     def configure_evi(self, enable=True):
         """
         Configure EVI for rising edge detection, enable time stamping,
@@ -213,6 +258,7 @@ class RV3028:
             self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.CLEAR)
             self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.CLEAR)
 
+    # TODO: re-write this
     def get_event_timestamp(self):
         """
         Read the timestamp of the last EVI event.
@@ -230,12 +276,14 @@ class RV3028:
             data[0],  # count (not BCD)
         )
 
+    # TODO: re-write this
     def clear_event_flag(self):
         """
         Clear the Event Flag (EVF) in the Status Register.
         """
         self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
 
+    # TODO: re-write this
     def is_event_flag_set(self):
         """
         Check if the Event Flag (EVF) is set in the Status Register.
@@ -244,6 +292,7 @@ class RV3028:
         """
         return self._get_flag(Reg.STATUS, Status.EVENT)
 
+    # TODO: re-write this
     def configure_backup_switchover(self, mode="level", interrupt=False):
         """
         Configure the Automatic Backup Switchover function.
@@ -281,6 +330,7 @@ class RV3028:
         # Update EEPROM
         self._eecommand(EECMD.REFRESH)
 
+    # TODO: re-write this
     def is_backup_switchover_occurred(self):
         """
         Check if a backup switchover has occurred.
@@ -289,6 +339,7 @@ class RV3028:
         """
         return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
 
+    # TODO: re-write this
     def clear_backup_switchover_flag(self):
         """
         Clear the Backup Switchover Flag (BSF) in the Status Register.
