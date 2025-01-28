@@ -63,6 +63,7 @@ class Alarm(IntEnum):
 
     DISABLED = 0x80  # This is a flag that you should set to disable the alarm.
     VALUE = 0x7F  # Enable the alarm and store the value.
+    VALUE_SIZE = 7 # Number of bits of value
 
 
 class Status(IntEnum):

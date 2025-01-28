@@ -20,7 +20,6 @@ from registers import (
 )
 from tests.stubs.i2c_device import I2CDevice
 
-
 class RV3028:
     def __init__(self, i2c_device: I2CDevice):
         self.i2c_device = i2c_device
@@ -62,7 +61,12 @@ class RV3028:
     def _get_flag(self, register, mask, size=0):
         data = self._read_register(register)[0]
         if size == 0:
-            return bool(data & mask)
+            # if mask is a power of 2, return a single bit
+            if mask & (mask - 1) == 0:
+                return bool(data & mask)
+            
+            return data & mask
+
         return (data & mask) >> size
 
     def _eecommand(self, command: EECMD):
@@ -220,13 +224,13 @@ class RV3028:
 
         # Defining the helper in here limits its scope so outside users can't access it.
         def _get_alarm_field(reg: Reg):
-            enabled = self._get_flag(reg, Alarm.DISABLED)
-            if not enabled:
+            disabled = self._get_flag(reg, Alarm.DISABLED)
+            if disabled:
                 return None
             else:
                 return self._get_flag(reg, Alarm.VALUE)
 
-        return tuple(
+        return (
             _get_alarm_field(Reg.ALARM_MINUTES),
             _get_alarm_field(Reg.ALARM_HOURS),
             _get_alarm_field(Reg.ALARM_WEEKDAY),
