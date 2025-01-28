@@ -52,9 +52,9 @@ def test_set_alarm(rtc):
     alarm_minutes = rtc._read_register(Reg.ALARM_MINUTES)[0]
     alarm_hours = rtc._read_register(Reg.ALARM_HOURS)[0]
     alarm_weekday = rtc._read_register(Reg.ALARM_WEEKDAY)[0]
-    assert (alarm_minutes & ~Alarm.DISABLE) == rtc._int_to_bcd(30)
-    assert (alarm_hours & ~Alarm.DISABLE) == rtc._int_to_bcd(14)
-    assert (alarm_weekday & ~Alarm.DISABLE) == rtc._int_to_bcd(3)
+    assert (alarm_minutes & ~Alarm.DISABLED) == rtc._int_to_bcd(30)
+    assert (alarm_hours & ~Alarm.DISABLED) == rtc._int_to_bcd(14)
+    assert (alarm_weekday & ~Alarm.DISABLED) == rtc._int_to_bcd(3)
 
 
 def test_check_alarm(rtc):
