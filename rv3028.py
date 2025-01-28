@@ -59,16 +59,14 @@ class RV3028:
 
         self._write_register(register, bytes([data]))
 
-    def _get_flag(self, register, mask, size=0):
+    def _get_flag(self, register, mask, shift=0):
         data = self._read_register(register)[0]
-        if size == 0:
-            # if mask is a power of 2, return a single bit
-            if mask & (mask - 1) == 0:
-                return bool(data & mask)
+        result = (data & mask) >> shift
 
-            return data & mask
-
-        return (data & mask) >> size
+        # Automatically convert to bool if mask is a single bit
+        if mask & (mask - 1) == 0:
+            return bool(result)
+        return result
 
     def _eecommand(self, command: EECMD):
         while self._get_flag(Reg.STATUS, Status.EEBUSY):
