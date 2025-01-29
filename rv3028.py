@@ -59,9 +59,9 @@ class RV3028:
 
         self._write_register(register, bytes([data]))
 
-    def _get_flag(self, register, mask, shift=0):
+    def _get_flag(self, register, mask, size=0):
         data = self._read_register(register)[0]
-        result = (data & mask) >> shift
+        result = (data & mask) >> size
 
         # Automatically convert to bool if mask is a single bit
         if mask & (mask - 1) == 0:
