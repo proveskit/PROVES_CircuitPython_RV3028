@@ -1,10 +1,10 @@
 """
-This class handles communications
+This class handles the Rv3028 real time clock.
 
 Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
-from registers import (
+from rv3028.registers import (
     BSM,
     EECMD,
     Alarm,

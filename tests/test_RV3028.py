@@ -1,7 +1,7 @@
 import pytest
 from mocks.i2cMock import MockI2C, MockI2CDevice
 
-from registers import (
+from rv3028.registers import (
     BSM,
     Alarm,
     Control2,
@@ -12,7 +12,7 @@ from registers import (
     Resistance,
     Status,
 )
-from rv3028 import RV3028
+from rv3028.rv3028 import RV3028
 
 
 @pytest.fixture
