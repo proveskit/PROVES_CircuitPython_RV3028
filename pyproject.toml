@@ -25,8 +25,8 @@ relative_files = true
 show_missing = true
 skip_covered = false
 include = [
-    "registers.py",
-    "rv3028.py",
+    "rv3028/registers.py",
+    "rv3028/rv3028.py",
     ]
 
 [tool.coverage.html]
