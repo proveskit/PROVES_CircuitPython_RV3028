@@ -2,7 +2,6 @@ import pytest
 from mocks.i2cMock import MockI2C, MockI2CDevice
 
 from registers import (
-    BSM,
     Alarm,
     Control2,
     EEPROMBackup,
@@ -136,18 +135,20 @@ def test_check_event_flag_not_set(rtc):
     assert not rtc.check_event()
 
 
-def test_configure_backup_switchover(rtc):
-    rtc.configure_backup_switchover(mode="direct", interrupt=True)
-    backup_reg = rtc._read_register(Reg.EEPROM_BACKUP)[0]
-    backup_mode = rtc._get_flag(
-        Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, size=BSM.SIZE
-    )
-    assert backup_mode == BSM.DIRECT
-    assert backup_reg & EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE
-
-
-def test_backup_switchover_flag(rtc):
+def test_check_backup_switchover_set(rtc):
     rtc._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.SET)
-    assert rtc.is_backup_switchover_occurred()
-    rtc.clear_backup_switchover_flag()
-    assert not rtc.is_backup_switchover_occurred()
+    assert rtc.check_backup_switchover()
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert not (status & Status.BACKUP_SWITCH)
+
+
+def test_check_backup_switchover_not_set(rtc):
+    rtc._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+    assert not rtc.check_backup_switchover()
+
+
+def test_check_backup_switchover_no_clear(rtc):
+    rtc._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.SET)
+    assert rtc.check_backup_switchover(clear=False)
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert status & Status.BACKUP_SWITCH

@@ -325,14 +325,15 @@ class RV3028:
         :param interrupt: True to enable backup switchover interrupt, False to disable
         """
 
-        if mode == "level":
-            backup_mode = BSM.LEVEL
-        elif mode == "direct":
-            backup_mode = BSM.DIRECT
-        elif mode == "disabled":
-            backup_mode = BSM.DISABLED
-        else:
-            raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
+        match mode:
+            case "level":
+                backup_mode = BSM.LEVEL
+            case "direct":
+                backup_mode = BSM.DIRECT
+            case "disabled":
+                backup_mode = BSM.DISABLED
+            case _:
+                raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
 
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, backup_mode)
 
@@ -352,18 +353,10 @@ class RV3028:
         # Update EEPROM
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
-    def is_backup_switchover_occurred(self):
-        """
-        Check if a backup switchover has occurred.
+    def check_backup_switchover(self, clear=True):
+        """Check and clear the backup switchover flag if needed"""
+        result = self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
 
-        :return: True if switchover occurred, False otherwise
-        """
-        return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
-
-    # TODO: re-write this
-    def clear_backup_switchover_flag(self):
-        """
-        Clear the Backup Switchover Flag (BSF) in the Status Register.
-        """
-        self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+        return result
