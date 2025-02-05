@@ -119,18 +119,21 @@ def test_get_event_timestamp(rtc):
     assert ts == (21, 9, 25, 12, 20, 10, 0)
 
 
-def test_clear_event_flag(rtc):
+def test_check_event_flag_set(rtc):
     rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.SET)
-    rtc.clear_event_flag()
+    assert rtc.check_event()
+
+
+def test_check_event_flag_clear(rtc):
+    rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.SET)
+    rtc.check_event(clear=True)
     status = rtc._read_register(Reg.STATUS)[0]
     assert not (status & Status.EVENT)
 
 
-def test_is_event_flag_set(rtc):
-    rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.SET)
-    assert rtc.is_event_flag_set()
-    rtc.clear_event_flag()
-    assert not rtc.is_event_flag_set()
+def test_check_event_flag_not_set(rtc):
+    rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
+    assert not rtc.check_event()
 
 
 def test_configure_backup_switchover(rtc):

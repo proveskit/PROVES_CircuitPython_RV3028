@@ -235,7 +235,6 @@ class RV3028:
             _get_alarm_field(Reg.ALARM_WEEKDAY),
         )
 
-    # TODO: re-write this
     def enable_trickle_charger(self, resistance=3000):
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
@@ -257,14 +256,12 @@ class RV3028:
         # Refresh the EEPROM to apply changes
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def disable_trickle_charger(self):
         self._set_flag(
             Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR
         )
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def configure_evi(self, enable=True):
         """
         Configure EVI for rising edge detection, enable time stamping,
@@ -273,10 +270,12 @@ class RV3028:
         :param enable: True to enable EVI, False to disable
         """
         if enable:
-            # Configure Event Control Register
+            # Set rising edge
             self._set_flag(
                 Reg.EVENT_CONTROL, EventControl.EVENT_HIGH_LOW_SELECT, Flag.SET
             )
+
+            # Disable event filtering
             self._set_flag(
                 Reg.EVENT_CONTROL, EventControl.EVENT_FILTER, EventFilter.FILTER_OFF
             )
@@ -288,7 +287,6 @@ class RV3028:
             self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.CLEAR)
             self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.CLEAR)
 
-    # TODO: re-write this
     def get_event_timestamp(self):
         """
         Read the timestamp of the last EVI event.
@@ -306,21 +304,15 @@ class RV3028:
             data[0],  # count (not BCD)
         )
 
-    # TODO: re-write this
-    def clear_event_flag(self):
+    def check_event(self, clear=True):
         """
-        Clear the Event Flag (EVF) in the Status Register.
+        Check and clear the event flag if needed.
         """
-        self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
+        result = self._get_flag(Reg.STATUS, Status.EVENT)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
 
-    # TODO: re-write this
-    def is_event_flag_set(self):
-        """
-        Check if the Event Flag (EVF) is set in the Status Register.
-
-        :return: True if EVF is set, False otherwise
-        """
-        return self._get_flag(Reg.STATUS, Status.EVENT)
+        return result
 
     # TODO: re-write this
     def configure_backup_switchover(self, mode="level", interrupt=False):
