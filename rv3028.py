@@ -21,6 +21,10 @@ from registers import (
 from tests.stubs.i2c_device import I2CDevice
 
 
+class Weekday:
+    """Enumeration for weekdays"""
+
+
 class RV3028:
     def __init__(self, i2c_device: I2CDevice):
         self.i2c_device = i2c_device
