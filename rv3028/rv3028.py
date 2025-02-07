@@ -21,6 +21,16 @@ from rv3028.registers import (
 from tests.stubs.i2c_device import I2CDevice
 
 
+class WEEKDAY:
+    SUNDAY = 0
+    MONDAY = 1
+    TUESDAY = 2
+    WEDNESDAY = 3
+    THURSDAY = 4
+    FRIDAY = 5
+    SATURDAY = 6
+
+
 class RV3028:
     def __init__(self, i2c_device: I2CDevice):
         self.i2c_device = i2c_device
