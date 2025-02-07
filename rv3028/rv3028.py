@@ -20,11 +20,10 @@ from rv3028.registers import (
 )
 
 try:
-    from busio import I2C
-
-    from tests.stubs.i2c_device import I2CDevice
+    from tests.stubs.i2c_device import I2C, I2CDevice
 except ImportError:
     from adafruit_bus_device.i2c_device import I2CDevice
+    from busio import I2C
 
 _RV3028_DEFAULT_ADDRESS = 0x52
 
@@ -40,8 +39,13 @@ class WEEKDAY:
 
 
 class RV3028:
-    def __init__(self, i2c_bus: I2C, address: int = _RV3028_DEFAULT_ADDRESS):
-        self.i2c_device = I2CDevice(i2c_bus, address)
+    def __init__(self, i2c, address: int = _RV3028_DEFAULT_ADDRESS):
+        if isinstance(i2c, I2C):
+            self.i2c_device = I2CDevice(i2c, address)
+        elif isinstance(i2c, I2CDevice):
+            self.i2c_device = i2c
+        else:
+            raise TypeError("i2c should be an i2c bus or device!")
 
     def _read_register(self, register, length=1):
         with self.i2c_device as i2c:

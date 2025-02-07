@@ -19,7 +19,7 @@ from rv3028.rv3028 import RV3028
 def rtc():
     i2c_bus = MockI2C()
     i2c_device = MockI2CDevice(i2c_bus, 0x52)
-    rtc = RV3028(i2c_device)
+    rtc = RV3028(i2c_device, 0x52)
     return rtc
 
 
