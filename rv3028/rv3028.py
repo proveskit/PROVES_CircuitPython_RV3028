@@ -371,3 +371,4 @@ class RV3028:
         result = self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
         if result and clear:
             self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+        return result
