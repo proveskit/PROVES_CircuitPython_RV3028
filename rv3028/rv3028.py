@@ -245,7 +245,6 @@ class RV3028:
             _get_alarm_field(Reg.ALARM_WEEKDAY),
         )
 
-    # TODO: re-write this
     def enable_trickle_charger(self, resistance=3000):
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
@@ -267,14 +266,12 @@ class RV3028:
         # Refresh the EEPROM to apply changes
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def disable_trickle_charger(self):
         self._set_flag(
             Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR
         )
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def configure_evi(self, enable=True):
         """
         Configure EVI for rising edge detection, enable time stamping,
@@ -298,7 +295,6 @@ class RV3028:
             self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.CLEAR)
             self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.CLEAR)
 
-    # TODO: re-write this
     def get_event_timestamp(self):
         """
         Read the timestamp of the last EVI event.
@@ -316,23 +312,18 @@ class RV3028:
             data[0],  # count (not BCD)
         )
 
-    # TODO: re-write this
-    def clear_event_flag(self):
-        """
-        Clear the Event Flag (EVF) in the Status Register.
-        """
-        self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
-
-    # TODO: re-write this
-    def is_event_flag_set(self):
+    def check_event_flag(self, clear=True):
         """
         Check if the Event Flag (EVF) is set in the Status Register.
 
         :return: True if EVF is set, False otherwise
         """
-        return self._get_flag(Reg.STATUS, Status.EVENT)
+        result = self._get_flag(Reg.STATUS, Status.EVENT)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
 
-    # TODO: re-write this
+        return result
+
     def configure_backup_switchover(self, mode="level", interrupt=False):
         """
         Configure the Automatic Backup Switchover function.
@@ -343,14 +334,15 @@ class RV3028:
         :param interrupt: True to enable backup switchover interrupt, False to disable
         """
 
-        if mode == "level":
-            backup_mode = BSM.LEVEL
-        elif mode == "direct":
-            backup_mode = BSM.DIRECT
-        elif mode == "disabled":
-            backup_mode = BSM.DISABLED
-        else:
-            raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
+        match mode:
+            case "level":
+                backup_mode = BSM.LEVEL
+            case "direct":
+                backup_mode = BSM.DIRECT
+            case "disabled":
+                backup_mode = BSM.DISABLED
+            case _:
+                raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
 
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, backup_mode)
 
@@ -370,18 +362,12 @@ class RV3028:
         # Update EEPROM
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
-    def is_backup_switchover_occurred(self):
+    def check_backup_switchover(self, clear=True):
         """
         Check if a backup switchover has occurred.
 
         :return: True if switchover occurred, False otherwise
         """
-        return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
-
-    # TODO: re-write this
-    def clear_backup_switchover_flag(self):
-        """
-        Clear the Backup Switchover Flag (BSF) in the Status Register.
-        """
-        self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+        result = self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
