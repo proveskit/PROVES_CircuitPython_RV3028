@@ -1,4 +1,4 @@
-from stubs.i2c_device import I2C, I2CDevice
+from tests.stubs.i2c_device import I2C, I2CDevice
 
 
 class MockI2C(I2C):
