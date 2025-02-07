@@ -18,7 +18,11 @@ from rv3028.registers import (
     Resistance,
     Status,
 )
-from tests.stubs.i2c_device import I2CDevice
+
+try:
+    from tests.stubs.i2c_device import I2CDevice
+except ImportError:
+    from adafruit_bus_device.i2c_device import I2CDevice
 
 
 class WEEKDAY:
@@ -334,15 +338,14 @@ class RV3028:
         :param interrupt: True to enable backup switchover interrupt, False to disable
         """
 
-        match mode:
-            case "level":
-                backup_mode = BSM.LEVEL
-            case "direct":
-                backup_mode = BSM.DIRECT
-            case "disabled":
-                backup_mode = BSM.DISABLED
-            case _:
-                raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
+        if mode == "level":
+            backup_mode = BSM.LEVEL
+        elif mode == "direct":
+            backup_mode = BSM.DIRECT
+        elif mode == "disabled":
+            backup_mode = BSM.DISABLED
+        else:
+            raise ValueError("Invalid mode. Use 'level', 'direct', or 'disabled'.")
 
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.BACKUP_SWITCHOVER, backup_mode)
 
