@@ -18,7 +18,21 @@ from rv3028.registers import (
     Resistance,
     Status,
 )
-from tests.stubs.i2c_device import I2CDevice
+
+try:
+    from tests.stubs.i2c_device import I2CDevice
+except ImportError:
+    from adafruit_bus_device.i2c_device import I2CDevice
+
+
+class WEEKDAY:
+    SUNDAY = 0
+    MONDAY = 1
+    TUESDAY = 2
+    WEDNESDAY = 3
+    THURSDAY = 4
+    FRIDAY = 5
+    SATURDAY = 6
 
 
 class RV3028:
@@ -235,7 +249,6 @@ class RV3028:
             _get_alarm_field(Reg.ALARM_WEEKDAY),
         )
 
-    # TODO: re-write this
     def enable_trickle_charger(self, resistance=3000):
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.SET)
         self._set_flag(Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_RES, Flag.CLEAR)
@@ -257,14 +270,12 @@ class RV3028:
         # Refresh the EEPROM to apply changes
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def disable_trickle_charger(self):
         self._set_flag(
             Reg.EEPROM_BACKUP, EEPROMBackup.TRICKLE_CHARGE_ENABLE, Flag.CLEAR
         )
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
     def configure_evi(self, enable=True):
         """
         Configure EVI for rising edge detection, enable time stamping,
@@ -288,7 +299,6 @@ class RV3028:
             self._set_flag(Reg.CONTROL2, Control2.TIMESTAMP_ENABLE, Flag.CLEAR)
             self._set_flag(Reg.CONTROL2, Control2.EVENT_INT_ENABLE, Flag.CLEAR)
 
-    # TODO: re-write this
     def get_event_timestamp(self):
         """
         Read the timestamp of the last EVI event.
@@ -306,23 +316,18 @@ class RV3028:
             data[0],  # count (not BCD)
         )
 
-    # TODO: re-write this
-    def clear_event_flag(self):
-        """
-        Clear the Event Flag (EVF) in the Status Register.
-        """
-        self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
-
-    # TODO: re-write this
-    def is_event_flag_set(self):
+    def check_event_flag(self, clear=True):
         """
         Check if the Event Flag (EVF) is set in the Status Register.
 
         :return: True if EVF is set, False otherwise
         """
-        return self._get_flag(Reg.STATUS, Status.EVENT)
+        result = self._get_flag(Reg.STATUS, Status.EVENT)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.EVENT, Flag.CLEAR)
 
-    # TODO: re-write this
+        return result
+
     def configure_backup_switchover(self, mode="level", interrupt=False):
         """
         Configure the Automatic Backup Switchover function.
@@ -360,18 +365,13 @@ class RV3028:
         # Update EEPROM
         self._eecommand(EECMD.REFRESH)
 
-    # TODO: re-write this
-    def is_backup_switchover_occurred(self):
+    def check_backup_switchover(self, clear=True):
         """
         Check if a backup switchover has occurred.
 
         :return: True if switchover occurred, False otherwise
         """
-        return self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
-
-    # TODO: re-write this
-    def clear_backup_switchover_flag(self):
-        """
-        Clear the Backup Switchover Flag (BSF) in the Status Register.
-        """
-        self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+        result = self._get_flag(Reg.STATUS, Status.BACKUP_SWITCH)
+        if result and clear:
+            self._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.CLEAR)
+        return result

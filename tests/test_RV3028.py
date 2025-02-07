@@ -119,18 +119,27 @@ def test_get_event_timestamp(rtc):
     assert ts == (21, 9, 25, 12, 20, 10, 0)
 
 
-def test_clear_event_flag(rtc):
+def test_check_event_flag_set_and_clear(rtc):
+    # Set the event flag
     rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.SET)
-    rtc.clear_event_flag()
+    assert rtc.check_event_flag()  # Check and clear the flag
     status = rtc._read_register(Reg.STATUS)[0]
-    assert not (status & Status.EVENT)
+    assert not (status & Status.EVENT)  # Ensure the flag is cleared
 
 
-def test_is_event_flag_set(rtc):
+def test_check_event_flag_set_without_clear(rtc):
+    # Set the event flag
     rtc._set_flag(Reg.STATUS, Status.EVENT, Flag.SET)
-    assert rtc.is_event_flag_set()
-    rtc.clear_event_flag()
-    assert not rtc.is_event_flag_set()
+    assert rtc.check_event_flag(clear=False)  # Check without clearing the flag
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert status & Status.EVENT  # Ensure the flag is still set
+
+
+def test_check_event_flag_not_set(rtc):
+    # Ensure the event flag is not set
+    assert not rtc.check_event_flag()  # Check the flag
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert not (status & Status.EVENT)  # Ensure the flag is not set
 
 
 def test_configure_backup_switchover(rtc):
@@ -143,8 +152,24 @@ def test_configure_backup_switchover(rtc):
     assert backup_reg & EEPROMBackup.BACKUP_SWITCHOVER_INT_ENABLE
 
 
-def test_backup_switchover_flag(rtc):
+def test_check_backup_switchover_occurred(rtc):
+    # Set the backup switchover flag
     rtc._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.SET)
-    assert rtc.is_backup_switchover_occurred()
-    rtc.clear_backup_switchover_flag()
-    assert not rtc.is_backup_switchover_occurred()
+    assert rtc.check_backup_switchover()  # Check and clear the flag
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert not (status & Status.BACKUP_SWITCH)  # Ensure the flag is cleared
+
+
+def test_check_backup_switchover_occurred_without_clear(rtc):
+    # Set the backup switchover flag
+    rtc._set_flag(Reg.STATUS, Status.BACKUP_SWITCH, Flag.SET)
+    assert rtc.check_backup_switchover(clear=False)  # Check without clearing the flag
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert status & Status.BACKUP_SWITCH  # Ensure the flag is still set
+
+
+def test_check_backup_switchover_not_occurred(rtc):
+    # Ensure the backup switchover flag is not set
+    assert not rtc.check_backup_switchover()  # Check the flag
+    status = rtc._read_register(Reg.STATUS)[0]
+    assert not (status & Status.BACKUP_SWITCH)  # Ensure the flag is not set

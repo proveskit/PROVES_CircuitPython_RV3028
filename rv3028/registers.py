@@ -5,10 +5,8 @@ https://www.microcrystal.com/fileadmin/Media/Products/RTC/App.Manual/RV-3028-C7_
 Author: Davit Babayan
 """
 
-from enum import IntEnum
 
-
-class Reg(IntEnum):
+class Reg:
     SECONDS = 0x00
     MINUTES = 0x01
     HOURS = 0x02
@@ -50,12 +48,12 @@ class Reg(IntEnum):
     EEPROM_BACKUP = 0x37
 
 
-class Flag(IntEnum):
+class Flag:
     SET = 1
     CLEAR = 0
 
 
-class Alarm(IntEnum):
+class Alarm:
     """
     Contains bit masks for the alarm registers.
     The alarm registers that contain these flags are ALARM_MINUTES, ALARM_HOURS, and ALARM_DATE.
@@ -66,7 +64,7 @@ class Alarm(IntEnum):
     VALUE_SIZE = 7  # Number of bits of value
 
 
-class Status(IntEnum):
+class Status:
     """
     Contains bit masks for the status register. Generally, these should be READ, not written to.
     The exception is clearing the flags, since they do not clear themselves.
@@ -82,7 +80,7 @@ class Status(IntEnum):
     EEBUSY = 0x80  # Enabled if the EEPROM is handling a read/write request.
 
 
-class Control1(IntEnum):
+class Control1:
     """
     Contains bit masks for the control1 register.
     - This register is used to specify the target for the Alarm Interrupt function and the Periodic Time Update Interrupt
@@ -97,7 +95,7 @@ class Control1(IntEnum):
     TIMER_REPEAT = 0x80  # 0: Single mode, halt countdown when it reaches 0 (default). 1: repeat timer.
 
 
-class TimerFreq(IntEnum):
+class TimerFreq:
     """
     Selections for the frequency of the timer countdown clock.
     """
@@ -109,7 +107,7 @@ class TimerFreq(IntEnum):
     FREQ_60S = 0x11
 
 
-class Control2(IntEnum):
+class Control2:
     """
     Contains bit masks for the control2 register.
     - This register is used to control the interrupt event output for the INT pin, the stop/start status of clock and calendar
@@ -138,11 +136,11 @@ class Control2(IntEnum):
     TIMESTAMP_ENABLE = 0x80  # Enables the timestamp function (disabled by default).
 
 
-class GPBits(IntEnum):
+class GPBits:
     GPR_MASK = 0x7F  # General purpose bits. Can be used for any purpose.
 
 
-class ClockIntOn(IntEnum):
+class ClockIntOn:
     """
     Contains bit masks for the clock interrupt mask register.
     - This register is used to select a predefined interrupt for automatic clock output. Setting a bit to 1 selects the
@@ -158,7 +156,7 @@ class ClockIntOn(IntEnum):
     EVENT = 0x08  # Enables the event interrupt.
 
 
-class EventControl(IntEnum):
+class EventControl:
     """
     Contains bit masks for the event control register.
     - This register controls the event detection on the EVI pin. Depending of the EHL bit, high or low level (or rising or
@@ -180,7 +178,7 @@ class EventControl(IntEnum):
     )
 
 
-class EventFilter(IntEnum):
+class EventFilter:
     """
     Selections for the event filter.
     """
@@ -192,7 +190,7 @@ class EventFilter(IntEnum):
     FILTER_8Hz = 0x03
 
 
-class EEPROMClockOut(IntEnum):
+class EEPROMClockOut:
     """
     Contains bit masks for the EEPROM clock out register.
     - A programmable square wave output is available at CLKOUT pin. Clock output can be controlled by the CLKOE bit
@@ -210,7 +208,7 @@ class EEPROMClockOut(IntEnum):
     CLKOUT_ENABLE = 0x80  # 0: Clock output pin LOW. 1: Clock output on CLKOUT pin enabled (default).
 
 
-class FreqSelect(IntEnum):
+class FreqSelect:
     """
     Selections for the frequency of the clock in CLKOUT.
     - 8192 Hz to 1 Hz clock pulses and the timer interrupt pulses can be affected by compensation pulses
@@ -227,7 +225,7 @@ class FreqSelect(IntEnum):
     LOW = 0x07
 
 
-class EEPROMBackup(IntEnum):
+class EEPROMBackup:
     """
     Contains bit masks for the EEPROM backup register.
     - This register is used to control the switchover function and the trickle charger and it holds bit 0 (LSB) of the EEOffset
@@ -248,7 +246,7 @@ class EEPROMBackup(IntEnum):
     FEDE = 0x10  # FOR THE LOVE OF GOD, NEVER DISABLE THIS.
 
 
-class Resistance(IntEnum):
+class Resistance:
     """
     Selections for the resistance of the trickle charger.
     """
@@ -260,7 +258,7 @@ class Resistance(IntEnum):
     RES_15000 = 0x03
 
 
-class BSM(IntEnum):
+class BSM:
     """
     Selections for the backup switchover mode.
     """
@@ -272,7 +270,7 @@ class BSM(IntEnum):
     LEVEL = 0x03
 
 
-class EECMD(IntEnum):
+class EECMD:
     """
     Contains commands for the EEPROM.
     - This register must be written with specific values, in order to Update or Refresh all (readable/writeable) Configuration
@@ -289,7 +287,7 @@ class EECMD(IntEnum):
     READ_ONE_BYTE = 0x22  # Reads one byte from the EEPROM to EEDATA.
 
 
-class ID(IntEnum):
+class ID:
     """
     Contains the ID of the RTC module.
     - This register holds the 4 bit Hardware Identification number (HID) and the 4 bit Version Identification number (VID).

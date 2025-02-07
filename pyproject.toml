@@ -3,7 +3,7 @@ name = "proves-circuitpython-rv3028"
 version = "1.0.0"
 description = "RV3028 device driver"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12.3"
 dependencies = [
     "coverage==7.6.10",
     "pre-commit==4.0.1",
