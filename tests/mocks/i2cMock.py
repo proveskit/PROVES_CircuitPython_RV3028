@@ -1,9 +1,12 @@
-class MockI2C:
+from tests.stubs.i2c_device import I2C, I2CDevice
+
+
+class MockI2C(I2C):
     def __init__(self):
         self.registers = [0x00] * 256  # 256 8 bit registers
 
 
-class MockI2CDevice:
+class MockI2CDevice(I2CDevice):
     def __init__(self, i2c: MockI2C, address):
         self.i2c = i2c
         self.address = address
