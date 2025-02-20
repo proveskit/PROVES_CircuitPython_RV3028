@@ -117,6 +117,13 @@ class RV3028:
             minutes (int): The minute value to set (0-59).
             seconds (int): The second value to set (0-59).
         """
+        if hours < 0 or hours > 23:
+            raise ValueError("Hour value must be between 0 and 23")
+        if minutes < 0 or minutes > 59:
+            raise ValueError("Minute value must be between 0 and 59")
+        if seconds < 0 or seconds > 59:
+            raise ValueError("Second vaue must be between 0 and 59")
+
         data = bytes(
             [
                 self._int_to_bcd(seconds),
@@ -154,6 +161,15 @@ class RV3028:
             date (int): The date value to set (1-31).
             weekday (int): The day of the week to set (0-6, where 0 represents Sunday).
         """
+        if year < 0 or year > 99:
+            raise ValueError("Year value must be between 0 and 99")
+        if month < 1 or month > 12:
+            raise ValueError("Month value must be between 1 and 12")
+        if date < 1 or date > 31:
+            raise ValueError("Date value must be between 1 and 31")
+        if weekday < 0 or weekday > 6:
+            raise ValueError("Weekday value must be between 0 and 6")
+
         data = bytes(
             [
                 self._int_to_bcd(weekday),
@@ -196,17 +212,17 @@ class RV3028:
             Alarm hour (0-23) or None
             Alarm weekday (0-6, 0=Sunday) or None
         """
-        # Set alarm mask to check for minute, hour, and weekday match
-        control2 = self._read_register(Reg.CONTROL2)[0]
-        self._set_flag(Reg.CONTROL2, Control2.ALARM_INT_ENABLE, Flag.SET)
-        self._write_register(Reg.CONTROL2, bytes([control2]))
-
         if minute is not None and (minute < 0 or minute > 59):
             raise ValueError("Invalid minute value")
         if hour is not None and (hour < 0 or hour > 23):
             raise ValueError("Invalid hour value")
         if weekday is not None and (weekday < 0 or weekday > 6):
             raise ValueError("Invalid weekday value")
+        
+        # Set alarm mask to check for minute, hour, and weekday match
+        control2 = self._read_register(Reg.CONTROL2)[0]
+        self._set_flag(Reg.CONTROL2, Control2.ALARM_INT_ENABLE, Flag.SET)
+        self._write_register(Reg.CONTROL2, bytes([control2]))
 
         data = bytes(
             (self._int_to_bcd(param) & Alarm.VALUE)
