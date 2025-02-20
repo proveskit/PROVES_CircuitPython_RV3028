@@ -218,7 +218,7 @@ class RV3028:
             raise ValueError("Invalid hour value")
         if weekday is not None and (weekday < 0 or weekday > 6):
             raise ValueError("Invalid weekday value")
-        
+
         # Set alarm mask to check for minute, hour, and weekday match
         control2 = self._read_register(Reg.CONTROL2)[0]
         self._set_flag(Reg.CONTROL2, Control2.ALARM_INT_ENABLE, Flag.SET)
