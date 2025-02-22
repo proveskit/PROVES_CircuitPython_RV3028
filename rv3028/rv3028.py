@@ -30,16 +30,6 @@ import adafruit_datetime as dt
 _RV3028_DEFAULT_ADDRESS = 0x52
 
 
-class WEEKDAY:
-    SUNDAY = 0
-    MONDAY = 1
-    TUESDAY = 2
-    WEDNESDAY = 3
-    THURSDAY = 4
-    FRIDAY = 5
-    SATURDAY = 6
-
-
 class RV3028:
     def __init__(self, i2c, address: int = _RV3028_DEFAULT_ADDRESS):
         if isinstance(i2c, I2C):
@@ -140,38 +130,29 @@ class RV3028:
             second=self._bcd_to_int(data[0]),
         )
 
-    def set_date(self, year: int, month: int, date: int, weekday: int) -> None:
+    def set_date(self, date: dt.date) -> None:
         """
         Sets the date of the device.
 
         Args:
-            year (int): The year value to set
-            month (int): The month value to set (1-12).
-            date (int): The date value to set (1-31).
-            weekday (int): The day of the week to set (0-6, where 0 represents Sunday).
+            date: A adafruit_datetime.date object representing the date to set.
         """
-        if year < 0 or year > 99:
-            raise ValueError("Year value must be between 0 and 99")
-        if month < 1 or month > 12:
-            raise ValueError("Month value must be between 1 and 12")
-        if date < 1 or date > 31:
-            raise ValueError("Date value must be between 1 and 31")
-        if weekday < 0 or weekday > 6:
-            raise ValueError("Weekday value must be between 0 and 6")
+        if date.year < 2000 or date.year > 2099:
+            raise ValueError("Year value must be between 2000 and 2099")
 
         data = bytes(
             [
-                self._int_to_bcd(weekday),
-                self._int_to_bcd(date),
-                self._int_to_bcd(month),
-                self._int_to_bcd(year),
+                self._int_to_bcd(date.weekday()),
+                self._int_to_bcd(date.day),
+                self._int_to_bcd(date.month),
+                self._int_to_bcd(date.year - 2000),
             ]
         )
         self._write_register(
             Reg.WEEKDAY, data
         )  # this is a weird way to do it but it works
 
-    def get_date(self) -> tuple[int, int, int, int]:
+    def get_date(self) -> dt.date:
         """
         Gets the date of the device.
 
@@ -183,11 +164,10 @@ class RV3028:
                 weekday (int): The day of the week (0-6, where 0 represents Sunday).
         """
         data = self._read_register(Reg.WEEKDAY, 4)
-        return (
-            self._bcd_to_int(data[3]),  # year
-            self._bcd_to_int(data[2]),  # month
-            self._bcd_to_int(data[1]),  # date
-            self._bcd_to_int(data[0]),  # weekday
+        return dt.date(
+            year=self._bcd_to_int(data[3]) + 2000,
+            month=self._bcd_to_int(data[2]),
+            day=self._bcd_to_int(data[1]),
         )
 
     def set_alarm(

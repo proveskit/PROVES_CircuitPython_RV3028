@@ -36,12 +36,14 @@ def test_set_and_get_time(rtc):
 
 
 def test_set_and_get_date(rtc):
-    rtc.set_date(21, 12, 31, 5)  # Year, month, date, weekday
-    year, month, date, weekday = rtc.get_date()
-    assert year == 21
-    assert month == 12
-    assert date == 31
-    assert weekday == 5
+    date_to_set = dt.date(year=2021, month=12, day=31)
+    rtc.set_date(date_to_set)
+
+    date_to_check = rtc.get_date()
+    assert date_to_check.year == 2021
+    assert date_to_check.month == 12
+    assert date_to_check.day == 31
+    assert date_to_check.weekday() == 4
 
 
 def test_set_flag(rtc):
