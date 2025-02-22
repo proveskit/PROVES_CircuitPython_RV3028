@@ -1,3 +1,4 @@
+import adafruit_datetime as dt
 import pytest
 from mocks.i2cMock import MockI2C, MockI2CDevice
 
@@ -25,11 +26,13 @@ def rtc():
 
 # Test functions
 def test_set_and_get_time(rtc):
-    rtc.set_time(23, 59, 58)
-    hours, minutes, seconds = rtc.get_time()
-    assert hours == 23
-    assert minutes == 59
-    assert seconds == 58
+    time_to_set = dt.time(hour=23, minute=59, second=58)
+    rtc.set_time(time_to_set)
+
+    time_to_check = rtc.get_time()
+    assert time_to_check.hour == 23
+    assert time_to_check.minute == 59
+    assert time_to_check.second == 58
 
 
 def test_set_and_get_date(rtc):

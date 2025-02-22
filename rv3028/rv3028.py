@@ -134,10 +134,10 @@ class RV3028:
             An adafruit_datetime.time object representing the time to set.
         """
         data = self._read_register(Reg.SECONDS, 3)
-        return (
-            self._bcd_to_int(data[2]),  # hours
-            self._bcd_to_int(data[1]),  # minutes
-            self._bcd_to_int(data[0]),  # seconds
+        return dt.time(
+            hour=self._bcd_to_int(data[2]),
+            minute=self._bcd_to_int(data[1]),
+            second=self._bcd_to_int(data[0]),
         )
 
     def set_date(self, year: int, month: int, date: int, weekday: int) -> None:
