@@ -1,6 +1,6 @@
 [project]
 name = "proves-circuitpython-rv3028"
-version = "1.0.0"
+version = "1.0.1"
 description = "RV3028 device driver"
 readme = "README.md"
 requires-python = ">=3.12.3"
@@ -8,6 +8,7 @@ dependencies = [
     "coverage==7.6.10",
     "pre-commit==4.0.1",
     "pytest==8.3.2",
+    "adafruit-circuitpython-datetime==1.4.0"
 ]
 
 [tool.ruff.format]
