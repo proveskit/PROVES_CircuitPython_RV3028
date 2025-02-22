@@ -100,7 +100,23 @@ class RV3028:
     def _int_to_bcd(self, value):
         return ((value // 10) << 4) | (value % 10)
 
-    def set_time(self, time: dt.time) -> None:
+    @property
+    def time(self) -> dt.time:
+        """
+        Retrieves the current time from the device.
+
+        Returns:
+            An adafruit_datetime.time object representing the time to set.
+        """
+        data = self._read_register(Reg.SECONDS, 3)
+        return dt.time(
+            hour=self._bcd_to_int(data[2]),
+            minute=self._bcd_to_int(data[1]),
+            second=self._bcd_to_int(data[0]),
+        )
+
+    @time.setter
+    def time(self, time: dt.time) -> None:
         """
         Sets the time on the device. This method configures the device's clock.
 
@@ -116,21 +132,27 @@ class RV3028:
         )
         self._write_register(Reg.SECONDS, data)
 
-    def get_time(self) -> dt.time:
+    @property
+    def date(self) -> dt.date:
         """
-        Retrieves the current time from the device.
+        Gets the date of the device.
 
         Returns:
-            An adafruit_datetime.time object representing the time to set.
+            tuple: A 4-tuple (year, month, date, weekday) where:
+                year (int): The year value (0-99).
+                month (int): The month value (1-12).
+                date (int): The date value (1-31).
+                weekday (int): The day of the week (0-6, where 0 represents Sunday).
         """
-        data = self._read_register(Reg.SECONDS, 3)
-        return dt.time(
-            hour=self._bcd_to_int(data[2]),
-            minute=self._bcd_to_int(data[1]),
-            second=self._bcd_to_int(data[0]),
+        data = self._read_register(Reg.WEEKDAY, 4)
+        return dt.date(
+            year=self._bcd_to_int(data[3]) + 2000,
+            month=self._bcd_to_int(data[2]),
+            day=self._bcd_to_int(data[1]),
         )
 
-    def set_date(self, date: dt.date) -> None:
+    @date.setter
+    def date(self, date: dt.date) -> None:
         """
         Sets the date of the device.
 
@@ -151,24 +173,6 @@ class RV3028:
         self._write_register(
             Reg.WEEKDAY, data
         )  # this is a weird way to do it but it works
-
-    def get_date(self) -> dt.date:
-        """
-        Gets the date of the device.
-
-        Returns:
-            tuple: A 4-tuple (year, month, date, weekday) where:
-                year (int): The year value (0-99).
-                month (int): The month value (1-12).
-                date (int): The date value (1-31).
-                weekday (int): The day of the week (0-6, where 0 represents Sunday).
-        """
-        data = self._read_register(Reg.WEEKDAY, 4)
-        return dt.date(
-            year=self._bcd_to_int(data[3]) + 2000,
-            month=self._bcd_to_int(data[2]),
-            day=self._bcd_to_int(data[1]),
-        )
 
     def set_alarm(
         self, minute: int = None, hour: int = None, weekday: int = None

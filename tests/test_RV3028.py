@@ -27,9 +27,9 @@ def rtc():
 # Test functions
 def test_set_and_get_time(rtc):
     time_to_set = dt.time(hour=23, minute=59, second=58)
-    rtc.set_time(time_to_set)
+    rtc.time = time_to_set
 
-    time_to_check = rtc.get_time()
+    time_to_check = rtc.time
     assert time_to_check.hour == 23
     assert time_to_check.minute == 59
     assert time_to_check.second == 58
@@ -37,9 +37,9 @@ def test_set_and_get_time(rtc):
 
 def test_set_and_get_date(rtc):
     date_to_set = dt.date(year=2021, month=12, day=31)
-    rtc.set_date(date_to_set)
+    rtc.date = date_to_set
 
-    date_to_check = rtc.get_date()
+    date_to_check = rtc.date
     assert date_to_check.year == 2021
     assert date_to_check.month == 12
     assert date_to_check.day == 31
