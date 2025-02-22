@@ -25,6 +25,8 @@ except ImportError:
     from adafruit_bus_device.i2c_device import I2CDevice
     from busio import I2C
 
+import adafruit_datetime as dt
+
 _RV3028_DEFAULT_ADDRESS = 0x52
 
 
@@ -108,41 +110,28 @@ class RV3028:
     def _int_to_bcd(self, value):
         return ((value // 10) << 4) | (value % 10)
 
-    def set_time(self, hours: int, minutes: int, seconds: int) -> None:
+    def set_time(self, time: dt.time) -> None:
         """
         Sets the time on the device. This method configures the device's clock.
 
         Args:
-            hours (int): The hour value to set (0-23 for 24-hour format).
-            minutes (int): The minute value to set (0-59).
-            seconds (int): The second value to set (0-59).
+            time: A adafruit_datetime.time object representing the time to set.
         """
-        if hours < 0 or hours > 23:
-            raise ValueError("Hour value must be between 0 and 23")
-        if minutes < 0 or minutes > 59:
-            raise ValueError("Minute value must be between 0 and 59")
-        if seconds < 0 or seconds > 59:
-            raise ValueError("Second vaue must be between 0 and 59")
-
         data = bytes(
             [
-                self._int_to_bcd(seconds),
-                self._int_to_bcd(minutes),
-                self._int_to_bcd(hours),
+                self._int_to_bcd(time.second),
+                self._int_to_bcd(time.minute),
+                self._int_to_bcd(time.hour),
             ]
         )
         self._write_register(Reg.SECONDS, data)
 
-    def get_time(self) -> tuple[int, int, int]:
+    def get_time(self) -> dt.time:
         """
         Retrieves the current time from the device.
 
         Returns:
-            tuple: A tuple containing the current time as (hours, minutes, seconds),
-            where:
-                hours (int): The hour value (0-23 for 24-hour format).
-                minutes (int): The minute value (0-59).
-                seconds (int): The second value (0-59).
+            An adafruit_datetime.time object representing the time to set.
         """
         data = self._read_register(Reg.SECONDS, 3)
         return (
