@@ -174,6 +174,28 @@ class RV3028:
             Reg.WEEKDAY, data
         )  # this is a weird way to do it but it works
 
+    @property
+    def datetime(self) -> dt.datetime:
+        """
+        Get the current date and time as a combined datetime object.
+
+        Returns:
+            adafruit_datetime.datetime: The current date and time.
+        """
+        return dt.datetime.combine(self.date, self.time)
+
+    @datetime.setter
+    def datetime(self, datetime: dt.datetime | str) -> None:
+        """
+        Set the date and time for the RV3028.
+
+        Args:
+            datetime (adafruit_datetime.datetime | str): A datetime object
+        """
+
+        self.time = datetime.time()
+        self.date = datetime.date()
+
     def set_alarm(
         self, minute: int = None, hour: int = None, weekday: int = None
     ) -> None:

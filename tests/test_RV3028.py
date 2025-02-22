@@ -26,8 +26,7 @@ def rtc():
 
 # Test functions
 def test_set_and_get_time(rtc):
-    time_to_set = dt.time(hour=23, minute=59, second=58)
-    rtc.time = time_to_set
+    rtc.time = dt.time(hour=23, minute=59, second=58)
 
     time_to_check = rtc.time
     assert time_to_check.hour == 23
@@ -36,14 +35,39 @@ def test_set_and_get_time(rtc):
 
 
 def test_set_and_get_date(rtc):
-    date_to_set = dt.date(year=2021, month=12, day=31)
-    rtc.date = date_to_set
+    rtc.date = dt.date(year=2021, month=12, day=31)
 
     date_to_check = rtc.date
     assert date_to_check.year == 2021
     assert date_to_check.month == 12
     assert date_to_check.day == 31
     assert date_to_check.weekday() == 4
+
+
+def test_year_bounds_on_set_date(rtc):
+    # Test setting a date with a year below the lower bound (2000)
+    with pytest.raises(ValueError):
+        rtc.date = dt.date(year=1999, month=12, day=31)
+
+    # Test setting a date with a year above the upper bound (2099)
+    with pytest.raises(ValueError):
+        rtc.date = dt.date(year=2100, month=1, day=1)
+
+
+def test_set_and_get_datetime(rtc):
+    datetime_to_set = dt.datetime(
+        year=2028, month=11, day=30, hour=11, minute=11, second=12
+    )
+    rtc.datetime = datetime_to_set
+
+    datetime_to_check = rtc.datetime
+    assert datetime_to_check.year == 2028
+    assert datetime_to_check.month == 11
+    assert datetime_to_check.day == 30
+    assert datetime_to_check.hour == 11
+    assert datetime_to_check.minute == 11
+    assert datetime_to_check.second == 12
+    assert datetime_to_check.weekday() == 3
 
 
 def test_set_flag(rtc):
