@@ -43,6 +43,10 @@ def test_validate_dates():
         dt._validate_dates(2000, 4, 31)  # day too big
     with pytest.raises(ValueError):
         dt._validate_dates(2001, 2, 29)  # Not a leap year
+    try:
+        dt._validate_dates(2000, 2, 29)  # Valid leap year date
+    except ValueError:
+        pytest.fail("Unexpected ValueError raised")
 
 
 def test_time():
