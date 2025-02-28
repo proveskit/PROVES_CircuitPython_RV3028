@@ -51,6 +51,11 @@ class rtime:
         self._second = second
         return self
 
+    def __repr__(self) -> str:
+        return f"{self.hour}:{self.minute}:{self.second}"
+
+    __str__ = __repr__
+
     @property
     def hour(self) -> int:
         return self._hour
@@ -62,3 +67,39 @@ class rtime:
     @property
     def second(self) -> int:
         return self._second
+
+
+class rdate:
+    """
+    Class that represents date in year, month and day.
+
+    Attributes:
+        year (int): The year of the date.
+        month (int): The month of the date.
+        day (int): The day of the date.
+    """
+
+    def __new__(cls, year: int, month: int, day: int) -> "rdate":
+        _validate_dates(year, month, day)
+        self = super().__new__(cls)
+        self._year = year
+        self._month = month
+        self._day = day
+        return self
+
+    def __repr__(self) -> str:
+        return f"{self.year}-{self.month}-{self.day}"
+
+    __str__ = __repr__
+
+    @property
+    def year(self) -> int:
+        return self._year
+
+    @property
+    def month(self) -> int:
+        return self._month
+
+    @property
+    def day(self) -> int:
+        return self._day
