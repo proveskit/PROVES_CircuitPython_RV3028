@@ -1,7 +1,5 @@
 """
 Basic date and time formatting library for RV-3028-C7 RTC module.
-
-Author: Davit Babayan
 """
 
 _MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
@@ -33,7 +31,7 @@ def _validate_dates(year: int, month: int, day: int) -> None:
             raise ValueError(f"Day must be in 1..{_MONTH_DAYS[month - 1]}")
 
 
-class rtime:
+class time:
     """
     Class that represents time in hours, minutes and seconds.
 
@@ -43,7 +41,7 @@ class rtime:
         second (int): The second of the time.
     """
 
-    def __new__(cls, hour: int, minute: int, second: int) -> "rtime":
+    def __new__(cls, hour: int, minute: int, second: int) -> "time":
         _validate_times(hour, minute, second)
         self = super().__new__(cls)
         self._hour = hour
@@ -69,7 +67,7 @@ class rtime:
         return self._second
 
 
-class rdate:
+class date:
     """
     Class that represents date in year, month and day.
 
@@ -79,7 +77,7 @@ class rdate:
         day (int): The day of the date.
     """
 
-    def __new__(cls, year: int, month: int, day: int) -> "rdate":
+    def __new__(cls, year: int, month: int, day: int) -> "date":
         _validate_dates(year, month, day)
         self = super().__new__(cls)
         self._year = year
@@ -105,7 +103,7 @@ class rdate:
         return self._day
 
 
-class rdatetime:
+class datetime:
     """
     Class that represents date and time combined.
 
@@ -120,7 +118,7 @@ class rdatetime:
 
     def __new__(
         cls, year: int, month: int, day: int, hour: int, minute: int, second: int
-    ) -> "rdatetime":
+    ) -> "datetime":
         _validate_dates(year, month, day)
         _validate_times(hour, minute, second)
         self = object().__new__(cls)
@@ -131,6 +129,10 @@ class rdatetime:
         self._minute = minute
         self._hour = hour
         return self
+
+    @classmethod
+    def combine(cls, date: date, time: time) -> "datetime":
+        return cls(date.year, date.month, date.day, time.hour, time.minute, time.second)
 
     def __repr__(self) -> str:
         return f"{self.year}-{self.month:02d}-{self.day:02d} {self.hour:02d}:{self.minute:02d}:{self.second:02d}"
@@ -160,3 +162,9 @@ class rdatetime:
     @property
     def second(self) -> int:
         return self._second
+
+    def time(self) -> time:
+        return time(self.hour, self.minute, self.second)
+
+    def date(self) -> date:
+        return date(self.year, self.month, self.day)

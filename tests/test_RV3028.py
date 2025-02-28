@@ -1,7 +1,7 @@
-import adafruit_datetime as dt
 import pytest
 from mocks.i2cMock import MockI2C, MockI2CDevice
 
+import rv3028.rdatetime as dt
 from rv3028.registers import (
     BSM,
     Alarm,
@@ -41,7 +41,6 @@ def test_set_and_get_date(rtc):
     assert date_to_check.year == 2021
     assert date_to_check.month == 12
     assert date_to_check.day == 31
-    assert date_to_check.weekday() == 4
 
 
 def test_year_bounds_on_set_date(rtc):
@@ -67,7 +66,6 @@ def test_set_and_get_datetime(rtc):
     assert datetime_to_check.hour == 11
     assert datetime_to_check.minute == 11
     assert datetime_to_check.second == 12
-    assert datetime_to_check.weekday() == 3
 
 
 def test_set_flag(rtc):

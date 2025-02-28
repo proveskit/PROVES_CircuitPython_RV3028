@@ -4,6 +4,7 @@ This class handles the Rv3028 real time clock.
 Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
+import rv3028.rdatetime as dt
 from rv3028.registers import (
     BSM,
     EECMD,
@@ -25,7 +26,6 @@ except ImportError:
     from adafruit_bus_device.i2c_device import I2CDevice
     from busio import I2C
 
-import adafruit_datetime as dt
 
 _RV3028_DEFAULT_ADDRESS = 0x52
 
@@ -144,11 +144,11 @@ class RV3028:
                 date (int): The date value (1-31).
                 weekday (int): The day of the week (0-6, where 0 represents Sunday).
         """
-        data = self._read_register(Reg.WEEKDAY, 4)
+        data = self._read_register(Reg.DATE, 3)
         return dt.date(
-            year=self._bcd_to_int(data[3]) + 2000,
-            month=self._bcd_to_int(data[2]),
-            day=self._bcd_to_int(data[1]),
+            year=self._bcd_to_int(data[2]) + 2000,
+            month=self._bcd_to_int(data[1]),
+            day=self._bcd_to_int(data[0]),
         )
 
     @date.setter
@@ -159,19 +159,16 @@ class RV3028:
         Args:
             date: A adafruit_datetime.date object representing the date to set.
         """
-        if date.year < 2000 or date.year > 2099:
-            raise ValueError("Year value must be between 2000 and 2099")
 
         data = bytes(
             [
-                self._int_to_bcd(date.weekday()),
                 self._int_to_bcd(date.day),
                 self._int_to_bcd(date.month),
                 self._int_to_bcd(date.year - 2000),
             ]
         )
         self._write_register(
-            Reg.WEEKDAY, data
+            Reg.DATE, data
         )  # this is a weird way to do it but it works
 
     @property
