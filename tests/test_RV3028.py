@@ -1,7 +1,7 @@
 import pytest
 from mocks.i2cMock import MockI2C, MockI2CDevice
 
-import rv3028.rdatetime as dt
+import rv3028.rtc_datetime as dt
 from rv3028.registers import (
     BSM,
     Alarm,

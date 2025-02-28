@@ -4,7 +4,7 @@ This class handles the Rv3028 real time clock.
 Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
-import rv3028.rdatetime as dt
+import rv3028.rtc_datetime as dt
 from rv3028.registers import (
     BSM,
     EECMD,
@@ -106,7 +106,7 @@ class RV3028:
         Retrieves the current time from the device.
 
         Returns:
-            An adafruit_datetime.time object representing the time to set.
+            An rtc_datetime.time object representing the time to set.
         """
         data = self._read_register(Reg.SECONDS, 3)
         return dt.time(
@@ -121,7 +121,7 @@ class RV3028:
         Sets the time on the device. This method configures the device's clock.
 
         Args:
-            time: A adafruit_datetime.time object representing the time to set.
+            time: A rtc_datetime.time object representing the time to set.
         """
         data = bytes(
             [
@@ -138,11 +138,7 @@ class RV3028:
         Gets the date of the device.
 
         Returns:
-            tuple: A 4-tuple (year, month, date, weekday) where:
-                year (int): The year value (0-99).
-                month (int): The month value (1-12).
-                date (int): The date value (1-31).
-                weekday (int): The day of the week (0-6, where 0 represents Sunday).
+            An rtc_datetime.date object representing the date.
         """
         data = self._read_register(Reg.DATE, 3)
         return dt.date(
@@ -157,7 +153,7 @@ class RV3028:
         Sets the date of the device.
 
         Args:
-            date: A adafruit_datetime.date object representing the date to set.
+            date: A rtc_datetime.date object representing the date to set.
         """
 
         data = bytes(
@@ -177,7 +173,7 @@ class RV3028:
         Get the current date and time as a combined datetime object.
 
         Returns:
-            adafruit_datetime.datetime: The current date and time.
+            rtc_datetime.datetime: The current date and time.
         """
         return dt.datetime.combine(self.date, self.time)
 
@@ -187,7 +183,7 @@ class RV3028:
         Set the date and time for the RV3028.
 
         Args:
-            datetime (adafruit_datetime.datetime | str): A datetime object
+            datetime (rtc_datetime.datetime): A datetime object
         """
 
         self.time = datetime.time()
