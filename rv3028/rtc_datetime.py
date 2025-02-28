@@ -27,8 +27,8 @@ def _validate_dates(year: int, month: int, day: int) -> None:
     if month == 2 and _is_leap_year(year):
         if not (1 <= day <= 29):
             raise ValueError("Day must be in 1..29")
-        elif not (1 <= day <= _MONTH_DAYS[month - 1]):
-            raise ValueError(f"Day must be in 1..{_MONTH_DAYS[month - 1]}")
+    elif not (1 <= day <= _MONTH_DAYS[month - 1]):
+        raise ValueError(f"Day must be in 1..{_MONTH_DAYS[month - 1]}")
 
 
 class time:
@@ -50,7 +50,7 @@ class time:
         return self
 
     def __repr__(self) -> str:
-        return f"{self.hour}:{self.minute}:{self.second}"
+        return f"{self.hour:2d}:{self.minute:2d}:{self.second:2d}"
 
     __str__ = __repr__
 

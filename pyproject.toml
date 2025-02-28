@@ -28,6 +28,7 @@ skip_covered = false
 include = [
     "rv3028/registers.py",
     "rv3028/rv3028.py",
+    "rv3028/rtc_datetime.py",
     ]
 
 [tool.coverage.html]
