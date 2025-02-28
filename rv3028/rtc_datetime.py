@@ -43,7 +43,7 @@ class time:
 
     def __new__(cls, hour: int, minute: int, second: int) -> "time":
         _validate_times(hour, minute, second)
-        self = super().__new__(cls)
+        self = object.__new__(cls)
         self._hour = hour
         self._minute = minute
         self._second = second
@@ -79,7 +79,7 @@ class date:
 
     def __new__(cls, year: int, month: int, day: int) -> "date":
         _validate_dates(year, month, day)
-        self = super().__new__(cls)
+        self = object.__new__(cls)
         self._year = year
         self._month = month
         self._day = day
@@ -121,7 +121,7 @@ class datetime:
     ) -> "datetime":
         _validate_dates(year, month, day)
         _validate_times(hour, minute, second)
-        self = object().__new__(cls)
+        self = object.__new__(cls)
         self._year = year
         self._month = month
         self._day = day
