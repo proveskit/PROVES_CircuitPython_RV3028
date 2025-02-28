@@ -9,6 +9,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+.coverage*
+.coverage-reports/
 coverage-reports/
 develop-eggs/
 dist/
