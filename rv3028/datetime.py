@@ -103,3 +103,60 @@ class rdate:
     @property
     def day(self) -> int:
         return self._day
+
+
+class rdatetime:
+    """
+    Class that represents date and time combined.
+
+    Attributes:
+        year (int): The year of the datetime.
+        month (int): The month of the datetime.
+        day (int): The day of the datetime.
+        hour (int): The hour of the datetime.
+        minute (int): The minute of the datetime.
+        second (int): The second of the datetime.
+    """
+
+    def __new__(
+        cls, year: int, month: int, day: int, hour: int, minute: int, second: int
+    ) -> "rdatetime":
+        _validate_dates(year, month, day)
+        _validate_times(hour, minute, second)
+        self = object().__new__(cls)
+        self._year = year
+        self._month = month
+        self._day = day
+        self._second = second
+        self._minute = minute
+        self._hour = hour
+        return self
+
+    def __repr__(self) -> str:
+        return f"{self.year}-{self.month:02d}-{self.day:02d} {self.hour:02d}:{self.minute:02d}:{self.second:02d}"
+
+    __str__ = __repr__
+
+    @property
+    def year(self) -> int:
+        return self._year
+
+    @property
+    def month(self) -> int:
+        return self._month
+
+    @property
+    def day(self) -> int:
+        return self._day
+
+    @property
+    def hour(self) -> int:
+        return self._hour
+
+    @property
+    def minute(self) -> int:
+        return self._minute
+
+    @property
+    def second(self) -> int:
+        return self._second
