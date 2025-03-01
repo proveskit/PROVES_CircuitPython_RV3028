@@ -31,7 +31,7 @@ include = [
     ]
 
 [tool.coverage.html]
-directory = "coverage-reports/html"
+directory = ".coverage-reports/html"
 
 [tool.coverage.xml]
-output = "coverage-reports/coverage.xml"
+output = ".coverage-reports/coverage.xml"

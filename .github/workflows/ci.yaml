@@ -21,3 +21,12 @@ jobs:
       - name: Test
         run: |
           make test
+      - name: Archive coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: .coverage-reports/coverage.xml
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
