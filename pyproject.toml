@@ -1,13 +1,13 @@
 [project]
 name = "proves-circuitpython-rv3028"
-version = "1.0.0"
+version = "1.0.1"
 description = "RV3028 device driver"
 readme = "README.md"
 requires-python = ">=3.12.3"
 dependencies = [
     "coverage==7.6.10",
     "pre-commit==4.0.1",
-    "pytest==8.3.2",
+    "pytest==8.3.2"
 ]
 
 [tool.ruff.format]
@@ -27,6 +27,7 @@ skip_covered = false
 include = [
     "rv3028/registers.py",
     "rv3028/rv3028.py",
+    "rv3028/rtc_datetime.py",
     ]
 
 [tool.coverage.html]

@@ -4,6 +4,7 @@ This class handles the Rv3028 real time clock.
 Authors: Nicole Maggard, Michael Pham, and Rachel Sarmiento
 """
 
+import rv3028.rtc_datetime as dt
 from rv3028.registers import (
     BSM,
     EECMD,
@@ -25,17 +26,8 @@ except ImportError:
     from adafruit_bus_device.i2c_device import I2CDevice
     from busio import I2C
 
+
 _RV3028_DEFAULT_ADDRESS = 0x52
-
-
-class WEEKDAY:
-    SUNDAY = 0
-    MONDAY = 1
-    TUESDAY = 2
-    WEDNESDAY = 3
-    THURSDAY = 4
-    FRIDAY = 5
-    SATURDAY = 6
 
 
 class RV3028:
@@ -108,98 +100,94 @@ class RV3028:
     def _int_to_bcd(self, value):
         return ((value // 10) << 4) | (value % 10)
 
-    def set_time(self, hours: int, minutes: int, seconds: int) -> None:
-        """
-        Sets the time on the device. This method configures the device's clock.
-
-        Args:
-            hours (int): The hour value to set (0-23 for 24-hour format).
-            minutes (int): The minute value to set (0-59).
-            seconds (int): The second value to set (0-59).
-        """
-        if hours < 0 or hours > 23:
-            raise ValueError("Hour value must be between 0 and 23")
-        if minutes < 0 or minutes > 59:
-            raise ValueError("Minute value must be between 0 and 59")
-        if seconds < 0 or seconds > 59:
-            raise ValueError("Second vaue must be between 0 and 59")
-
-        data = bytes(
-            [
-                self._int_to_bcd(seconds),
-                self._int_to_bcd(minutes),
-                self._int_to_bcd(hours),
-            ]
-        )
-        self._write_register(Reg.SECONDS, data)
-
-    def get_time(self) -> tuple[int, int, int]:
+    @property
+    def time(self) -> dt.time:
         """
         Retrieves the current time from the device.
 
         Returns:
-            tuple: A tuple containing the current time as (hours, minutes, seconds),
-            where:
-                hours (int): The hour value (0-23 for 24-hour format).
-                minutes (int): The minute value (0-59).
-                seconds (int): The second value (0-59).
+            An rtc_datetime.time object representing the time to set.
         """
         data = self._read_register(Reg.SECONDS, 3)
-        return (
-            self._bcd_to_int(data[2]),  # hours
-            self._bcd_to_int(data[1]),  # minutes
-            self._bcd_to_int(data[0]),  # seconds
+        return dt.time(
+            hour=self._bcd_to_int(data[2]),
+            minute=self._bcd_to_int(data[1]),
+            second=self._bcd_to_int(data[0]),
         )
 
-    def set_date(self, year: int, month: int, date: int, weekday: int) -> None:
+    @time.setter
+    def time(self, time: dt.time) -> None:
         """
-        Sets the date of the device.
+        Sets the time on the device. This method configures the device's clock.
 
         Args:
-            year (int): The year value to set
-            month (int): The month value to set (1-12).
-            date (int): The date value to set (1-31).
-            weekday (int): The day of the week to set (0-6, where 0 represents Sunday).
+            time: A rtc_datetime.time object representing the time to set.
         """
-        if year < 0 or year > 99:
-            raise ValueError("Year value must be between 0 and 99")
-        if month < 1 or month > 12:
-            raise ValueError("Month value must be between 1 and 12")
-        if date < 1 or date > 31:
-            raise ValueError("Date value must be between 1 and 31")
-        if weekday < 0 or weekday > 6:
-            raise ValueError("Weekday value must be between 0 and 6")
-
         data = bytes(
             [
-                self._int_to_bcd(weekday),
-                self._int_to_bcd(date),
-                self._int_to_bcd(month),
-                self._int_to_bcd(year),
+                self._int_to_bcd(time.second),
+                self._int_to_bcd(time.minute),
+                self._int_to_bcd(time.hour),
             ]
         )
-        self._write_register(
-            Reg.WEEKDAY, data
-        )  # this is a weird way to do it but it works
+        self._write_register(Reg.SECONDS, data)
 
-    def get_date(self) -> tuple[int, int, int, int]:
+    @property
+    def date(self) -> dt.date:
         """
         Gets the date of the device.
 
         Returns:
-            tuple: A 4-tuple (year, month, date, weekday) where:
-                year (int): The year value (0-99).
-                month (int): The month value (1-12).
-                date (int): The date value (1-31).
-                weekday (int): The day of the week (0-6, where 0 represents Sunday).
+            An rtc_datetime.date object representing the date.
         """
-        data = self._read_register(Reg.WEEKDAY, 4)
-        return (
-            self._bcd_to_int(data[3]),  # year
-            self._bcd_to_int(data[2]),  # month
-            self._bcd_to_int(data[1]),  # date
-            self._bcd_to_int(data[0]),  # weekday
+        data = self._read_register(Reg.DATE, 3)
+        return dt.date(
+            year=self._bcd_to_int(data[2]) + 2000,
+            month=self._bcd_to_int(data[1]),
+            day=self._bcd_to_int(data[0]),
         )
+
+    @date.setter
+    def date(self, date: dt.date) -> None:
+        """
+        Sets the date of the device.
+
+        Args:
+            date: A rtc_datetime.date object representing the date to set.
+        """
+
+        data = bytes(
+            [
+                self._int_to_bcd(date.day),
+                self._int_to_bcd(date.month),
+                self._int_to_bcd(date.year - 2000),
+            ]
+        )
+        self._write_register(
+            Reg.DATE, data
+        )  # this is a weird way to do it but it works
+
+    @property
+    def datetime(self) -> dt.datetime:
+        """
+        Get the current date and time as a combined datetime object.
+
+        Returns:
+            rtc_datetime.datetime: The current date and time.
+        """
+        return dt.datetime.combine(self.date, self.time)
+
+    @datetime.setter
+    def datetime(self, datetime: dt.datetime | str) -> None:
+        """
+        Set the date and time for the RV3028.
+
+        Args:
+            datetime (rtc_datetime.datetime): A datetime object
+        """
+
+        self.time = datetime.time()
+        self.date = datetime.date()
 
     def set_alarm(
         self, minute: int = None, hour: int = None, weekday: int = None
