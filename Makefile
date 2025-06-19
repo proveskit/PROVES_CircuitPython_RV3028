@@ -38,7 +38,7 @@ $(TOOLS_DIR):
 	mkdir -p $(TOOLS_DIR)
 
 ### Tool Versions
-UV_VERSION ?= 0.5.24
+UV_VERSION ?= 0.7.13
 
 UV_DIR ?= $(TOOLS_DIR)/uv-$(UV_VERSION)
 UV ?= $(UV_DIR)/uv
