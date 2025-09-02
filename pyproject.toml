@@ -1,6 +1,6 @@
 [project]
 name = "proves-circuitpython-rv3028"
-version = "1.0.1"
+version = "1.0.2"
 description = "RV3028 device driver"
 readme = "README.md"
 requires-python = ">=3.12.3"
@@ -12,6 +12,9 @@ dev = [
     "pre-commit==4.2.0",
     "pytest==8.4.1",
 ]
+
+[tool.setuptools.packages.find]
+include = ["rv3028*"]
 
 [tool.ruff.format]
 # Use `\n` line endings for all files
@@ -30,7 +33,7 @@ skip_covered = false
 include = [
     "rv3028/registers.py",
     "rv3028/rv3028.py",
-    ]
+]
 
 [tool.coverage.html]
 directory = ".coverage-reports/html"
